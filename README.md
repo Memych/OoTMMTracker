@@ -30,10 +30,6 @@ A tracker application for OoTMM (Ocarina of Time + Majora's Mask) randomizer.
 - Special Conditions for Ganon Boss Key
 - And much more
 
-## Screenshots
-
-*(add application screenshots here)*
-
 ## Installation
 
 ### Option 1: Portable (Recommended)
