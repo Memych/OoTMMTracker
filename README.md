@@ -142,4 +142,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Contact
 
-*(your contact info or Discord/Reddit link)*
+Discord: memych_
