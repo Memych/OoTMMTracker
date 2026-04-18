@@ -4,16 +4,19 @@
 
 ### Improvements
 - Default icon size changed to 48×48 (was 34×34)
-- Left panel width now fixed to match default icon size
+- Left panel width fixed to match default icon size
 - Zoom controls (−/+/↺) added to main window with current size label
 - Broadcast window: independent zoom controls (−/+/↺) with own size label
 - Broadcast window: layout now updates dynamically when resizing (no need to reopen)
 - Broadcast window: zoom changes apply immediately without reopening
 - Application icon updated to Triforce
+- F7 hotkey added to open/focus Broadcast window
+- Info bar moved to second row to avoid overlapping with buttons
 
 ### Bug Fixes
 - Fixed soul icon paths (were pointing to non-existent subdirectories)
 - Removed Spring Water and Hot Spring Water from OoT bottle options (MM-exclusive)
+- Fixed Ganon's Boss Key tooltip not updating when Special Conditions change
 
 ### Credits
 - Added attribution for **OoT Reloaded** and **MM Reloaded** as sources for high-resolution item icons
