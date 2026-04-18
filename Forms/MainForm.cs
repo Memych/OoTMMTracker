@@ -120,7 +120,7 @@ namespace OoTMMTracker.Forms
             this.WindowState = FormWindowState.Maximized;
             
             // Header — one row with buttons
-            var topPanel = new Panel { Dock = DockStyle.Top, Height = 44, BackColor = Color.FromArgb(45, 45, 45) };
+            var topPanel = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = Color.FromArgb(45, 45, 45) };
             
             // Row 1: buttons
             _btnLoadFile = new Button { Text = "Load Spoiler Log", Location = new Point(8, 8), Size = new Size(180, 28),
@@ -288,7 +288,7 @@ namespace OoTMMTracker.Forms
             };
             topPanel.Controls.Add(btnZoomReset);
             
-            _lblInfo = new Label { Location = new Point(808, 12), Size = new Size(700, 20), Text = "No file loaded", ForeColor = Color.White };
+            _lblInfo = new Label { Location = new Point(8, 44), Size = new Size(1400, 18), Text = "No file loaded", ForeColor = Color.FromArgb(180, 180, 180) };
             topPanel.Controls.Add(_lblInfo);
             
             // Row 2: search and region — initialized below in searchPanel            
@@ -480,7 +480,7 @@ namespace OoTMMTracker.Forms
             // searchPanel (Top)
             rightContainer.Controls.Add(searchPanel);
             // Placeholder — added last, will be topmost
-            rightContainer.Controls.Add(new Label { Dock = DockStyle.Top, Height = 44, Text = "", BackColor = Color.FromArgb(45, 45, 45) });            
+            rightContainer.Controls.Add(new Label { Dock = DockStyle.Top, Height = 64, Text = "", BackColor = Color.FromArgb(45, 45, 45) });            
             // Drag & Drop
             this.AllowDrop = true;
             this.DragEnter += MainForm_DragEnter;
@@ -963,6 +963,20 @@ namespace OoTMMTracker.Forms
                 case Keys.F4: BtnLoad_Click(this, EventArgs.Empty); break;
                 case Keys.F5: BtnResetProgress_Click(this, EventArgs.Empty); break;
                 case Keys.F6: BtnResetTracker_Click(this, EventArgs.Empty); break;
+                case Keys.F7:
+                    if (_broadcastForm == null || _broadcastForm.IsDisposed)
+                    {
+                        _broadcastForm = new BroadcastForm();
+                        _lastBroadcastConfig = null;
+                        _lastBroadcastItemSize = -1;
+                        _broadcastForm.Show(this);
+                        UpdateBroadcast();
+                    }
+                    else
+                    {
+                        _broadcastForm.Focus();
+                    }
+                    break;
             }
         }
 
