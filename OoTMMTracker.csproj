@@ -6,6 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <RootNamespace>OoTMMTracker</RootNamespace>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Встраиваем все изображения в сборку -->
@@ -13,6 +14,13 @@
     <EmbeddedResource Include="Resources\Images\**\*.png">
       <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\app.ico">
+      <LogicalName>app.ico</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Resources\app.ico" />
   </ItemGroup>
 
 </Project>
