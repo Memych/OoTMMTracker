@@ -27,6 +27,7 @@ namespace OoTMMTracker.Controls
         // Global registry of all items for cross-panel synchronization (bombBag)
         private static readonly Dictionary<string, TrackerItem> _globalItems = new();
         private static readonly Dictionary<string, PictureBox> _globalPbs = new();
+        private static readonly Dictionary<PictureBox, ToolTip> _globalToolTips = new();
         // Current config for SyncGanonBk
         private static TrackerConfig? _globalCfg;
 
@@ -34,6 +35,7 @@ namespace OoTMMTracker.Controls
         {
             _globalItems.Clear();
             _globalPbs.Clear();
+            _globalToolTips.Clear();
         }
 
         public static void SetGlobalConfig(TrackerConfig cfg) => _globalCfg = cfg;
@@ -120,6 +122,7 @@ namespace OoTMMTracker.Controls
             {
                 _globalItems[item.Id] = item;
                 _globalPbs[item.Id]   = pb;
+                _globalToolTips[pb]   = _toolTip;
             }
 
             return pb;
@@ -665,7 +668,16 @@ namespace OoTMMTracker.Controls
                 bk.CurrentCount = score;
             }
             if (_globalPbs.TryGetValue("ganons_castle_bk", out var bkPb))
+            {
                 bkPb.Invalidate();
+                // Update tooltip to reflect new score
+                if (bkPb.Tag is TrackerItem bkItem && _globalToolTips.TryGetValue(bkPb, out var tt))
+                {
+                    int threshold = bkItem.AutoKeyThreshold > 0 ? bkItem.AutoKeyThreshold : bkItem.MaxCount;
+                    tt.SetToolTip(bkPb, $"{bkItem.Name}: {bkItem.CurrentCount}/{threshold} (max {bkItem.MaxCount})");
+                }
+            }
+            ItemChanged?.Invoke();
         }
 
         private Color GetBaseColor(TrackerItem item) => item.Type switch
