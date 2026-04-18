@@ -9,7 +9,7 @@
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <!-- Встраиваем все изображения в сборку -->
+  <!-- Embed all images into the assembly -->
   <ItemGroup>
     <EmbeddedResource Include="Resources\Images\**\*.png">
       <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
