@@ -83,18 +83,21 @@ Output: `bin/Release/net6.0-windows/win-x64/publish/OoTMMTracker.exe`
 ## Resources & Credits
 
 ### Item Icons
-All item icons are sourced from another OoTMM tracker project:
-- **Source**: [OoTMM Randomizer Item Tracker by ariahks](https://github.com/ariahks/ootmmrando_ariahks)
-- **Original Tracker**: EmoTracker package for OoTMM Randomizer
+Item icons are sourced from multiple projects:
+
+- **[OoTMM Randomizer Item Tracker by ariahks](https://github.com/ariahks/ootmmrando_ariahks)** — EmoTracker package for OoTMM Randomizer (dungeons, songs, collectibles, and other game elements)
+- **[OoT Reloaded](https://evilgames.eu/texture-packs/oot-reloaded.htm)** — High-resolution OoT item icon assets
+- **[MM Reloaded](https://evilgames.eu/texture-packs/mm-reloaded.htm)** — High-resolution MM item icon assets
 - **Original Assets**: The Legend of Zelda: Ocarina of Time and Majora's Mask (Nintendo Co., Ltd.)
-- **Usage**: Icons are used under fair use for non-commercial fan project purposes
-- **Location**: `Resources/Images/` directory contains icons for items, dungeons, songs, masks, and other game elements
+
+All icons are used under fair use for non-commercial fan project purposes.
 
 ### Special Thanks
-- **ariahks** - For the EmoTracker OoTMM package and icon resources
-- **OoTMM Development Team** - For creating the amazing randomizer
-- **Nintendo** - For the original games and assets
-- **OoT/MM Speedrunning Community** - For inspiration and feedback
+- **ariahks** — For the EmoTracker OoTMM package and icon resources
+- **OoT Reloaded / MM Reloaded teams** — For the high-resolution game assets
+- **OoTMM Development Team** — For creating the amazing randomizer
+- **Nintendo** — For the original games and assets
+- **OoT/MM Speedrunning Community** — For inspiration and feedback
 
 ## License
 
