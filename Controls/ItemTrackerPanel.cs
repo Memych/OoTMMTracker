@@ -13,9 +13,14 @@ namespace OoTMMTracker.Controls
         private readonly List<TrackerItem> _items;
         private readonly ToolTip _toolTip;
         private readonly int _columns;
-        private const int ItemSize  = 34;
+        private static int ItemSize  = 48;
+        private static readonly int[] ItemSizeSteps = { 16, 24, 32, 48, 64, 96, 128, 192, 256 };
         private const int ItemGap   = 2;
         private const int HeaderH   = 20;
+
+        public static void SetItemSize(int size) => ItemSize = size;
+        public static int GetItemSize() => ItemSize;
+        public static int[] GetItemSizeSteps() => ItemSizeSteps;
         private const int PadX      = 4;
         private const int PadTop    = 2;
 
@@ -32,6 +37,12 @@ namespace OoTMMTracker.Controls
         }
 
         public static void SetGlobalConfig(TrackerConfig cfg) => _globalCfg = cfg;
+
+        // Fired when any item changes — used by BroadcastForm
+        public static event Action? ItemChanged;
+
+        // If true — panel is read-only (broadcast mode)
+        public bool IsBroadcast { get; set; } = false;
 
         public ItemTrackerPanel(string title, List<TrackerItem> items, int columns, ToolTip toolTip)
         {
@@ -86,14 +97,15 @@ namespace OoTMMTracker.Controls
             }
         }
 
-        private PictureBox CreateItemBox(TrackerItem item, int x, int y, int size = ItemSize)
+        private PictureBox CreateItemBox(TrackerItem item, int x, int y, int size = 0)
         {
+            if (size == 0) size = ItemSize;
             var pb = new PictureBox
             {
                 Size      = new Size(size, size),
                 Location  = new Point(x, y),
                 BackColor = GetBaseColor(item),
-                Cursor    = Cursors.Hand,
+                Cursor    = IsBroadcast ? Cursors.Default : Cursors.Hand,
                 Tag       = item,
                 SizeMode  = PictureBoxSizeMode.StretchImage
             };
@@ -103,9 +115,12 @@ namespace OoTMMTracker.Controls
             pb.Paint     += ItemBox_Paint;
             pb.MouseDown += ItemBox_MouseDown;
 
-            // Register in global registry
-            _globalItems[item.Id] = item;
-            _globalPbs[item.Id]   = pb;
+            // Only register in global registry for main tracker (not broadcast)
+            if (!IsBroadcast)
+            {
+                _globalItems[item.Id] = item;
+                _globalPbs[item.Id]   = pb;
+            }
 
             return pb;
         }
@@ -205,6 +220,14 @@ namespace OoTMMTracker.Controls
                     : "?";
                 tip = $"{item.Name} — {reward}{(item.DungeonCleared ? " ✓" : "")}";
             }
+            else if (item.IsBottle)
+            {
+                var status = item.BottleContent == "Empty" ? "Empty" :
+                             item.CurrentCount == 0 ? $"{item.BottleContent} (not found)" :
+                             item.CurrentCount == 2 ? $"{item.BottleContent} (used)" :
+                             item.BottleContent;
+                tip = $"{item.Name}: {status}\nRight-click to change content";
+            }
             else if (item.IsAutoKey)
             {
                 int threshold = item.AutoKeyThreshold > 0 ? item.AutoKeyThreshold : item.MaxCount;
@@ -257,6 +280,17 @@ namespace OoTMMTracker.Controls
 
             if (label != null)
             {
+                bool isMax = item.CurrentCount >= item.MaxCount && item.MaxCount > 0;
+
+                // For notes mode — hide label at max (works for both regular songs and Goron Lullaby with Intro)
+                if (isMax && item.Type == TrackerItemType.Song && item.StepLabels != null)
+                    label = null;
+            }
+
+            if (label != null)
+            {
+                bool isMax = item.CurrentCount >= item.MaxCount && item.MaxCount > 0;
+
                 // Adaptive font: reduce if label is long
                 float fontSize = label.Length > 10 ? 4.5f : label.Length > 7 ? 5.5f : label.Length > 4 ? 6.5f : 7f;
                 using var font = new Font("Arial", fontSize, FontStyle.Bold);
@@ -266,14 +300,27 @@ namespace OoTMMTracker.Controls
 
                 using var shadow = new SolidBrush(Color.Black);
                 g.DrawString(label, font, shadow, tx + 1, ty + 1);
-                using var white = new SolidBrush(Color.White);
-                g.DrawString(label, font, white, tx, ty);
+
+                // At max — draw label in green, otherwise white
+                using var textBrush = new SolidBrush(isMax ? Color.FromArgb(100, 220, 100) : Color.White);
+                g.DrawString(label, font, textBrush, tx, ty);
+            }
+
+            // For Letter/Gold Dust bottle used (CurrentCount == 2) — draw checkmark
+            if (item.IsBottle && item.CurrentCount == 2)
+            {
+                using var checkFont = new Font("Arial", 9f, FontStyle.Bold);
+                using var shadow = new SolidBrush(Color.Black);
+                using var green  = new SolidBrush(Color.FromArgb(100, 220, 100));
+                g.DrawString("✓", checkFont, shadow, rect.Width - 11, 1);
+                g.DrawString("✓", checkFont, green,  rect.Width - 12, 0);
             }
 
             // Border
             bool isLit = item.AlwaysCollected ||
                 (item.IsDungeonReward ? item.DungeonCleared :
                  item.IsAutoKey ? item.AutoKeyLit :
+                 item.IsBottle ? item.CurrentCount > 0 :
                  item.CollectedWhenFull ? item.CurrentCount >= item.MaxCount :
                  item.PartialCollectedAt > 0 ? item.CurrentCount >= item.PartialCollectedAt :
                  item.CurrentCount > 0);
@@ -294,6 +341,9 @@ namespace OoTMMTracker.Controls
         {
             if (sender is not PictureBox pb || pb.Tag is not TrackerItem item)
                 return;
+
+            // Block all clicks in broadcast mode
+            if (IsBroadcast) return;
 
             if (item.IsDungeonReward)
             {
@@ -319,11 +369,49 @@ namespace OoTMMTracker.Controls
                 RefreshIcon(pb, item);
                 UpdateTooltip(pb, item);
                 pb.Invalidate();
+                ItemChanged?.Invoke();
                 return;
             }
 
             // IsAutoKey — not clickable
             if (item.IsAutoKey) return;
+
+            // Bottle handling
+            if (item.IsBottle)
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    // Letter/Gold Dust: cycle 0 → 1 → 2 → 0
+                    if (item.BottleContent is "Ruto's Letter" or "Gold Dust")
+                    {
+                        item.CurrentCount = (item.CurrentCount + 1) % 3;
+                    }
+                    else
+                    {
+                        // Regular bottle: toggle collected
+                        item.CurrentCount = item.CurrentCount > 0 ? 0 : 1;
+                    }
+                }
+                else if (e.Button == MouseButtons.Right)
+                {
+                    // Right click: cycle through content options
+                    if (item.BottleContentNames != null)
+                    {
+                        int idx = Array.IndexOf(item.BottleContentNames, item.BottleContent);
+                        idx = (idx + 1) % item.BottleContentNames.Length;
+                        item.BottleContent = item.BottleContentNames[idx];
+                        if (item.BottleContentIcons != null)
+                            item.IconPath = item.BottleContentIcons[idx];
+                        item.MaxCount = (item.BottleContent is "Ruto's Letter" or "Gold Dust") ? 2 : 1;
+                        item.CurrentCount = 0;
+                    }
+                }
+                RefreshIcon(pb, item);
+                UpdateTooltip(pb, item);
+                pb.Invalidate();
+                ItemChanged?.Invoke();
+                return;
+            }
 
             // In bombBag mode Bombchu is not clickable
             if (item.StepNames?.Length == 1 && item.StepNames[0].Contains("bomb_bag"))
@@ -344,13 +432,39 @@ namespace OoTMMTracker.Controls
                 || item.Id is "coin_red" or "coin_green" or "coin_blue" or "coin_yellow" or "triforce"
                 or "gold_skulltula_tokens" or "swamp_skulltula_tokens" or "ocean_skulltula_tokens"
                 or "sf_woodfall" or "sf_snowhead" or "sf_great_bay" or "sf_stone_tower" or "sf_clock_town"
-                or "transcendent_fairy" or "platinum_token" or "platinum_token_oot" or "platinum_token_mm")
+                or "transcendent_fairy" or "platinum_token" or "platinum_token_oot" or "platinum_token_mm"
+                || item.Id.StartsWith("reward_"))
                 SyncGanonBk();
+            ItemChanged?.Invoke();
         }
 
-        // Synchronizes Bombchu with bombs in bombBag mode (global search)
-        private static void SyncBombchu(TrackerItem changedItem)
+        private static string GetBottleLabelFromContent(string content) => content switch
         {
+            "Empty"            => "",
+            "Ruto's Letter"    => "Letter",
+            "Gold Dust"        => "G.Dust",
+            "Milk"             => "Milk",
+            "Chateau Romani"   => "Chateau",
+            "Red Potion"       => "Red",
+            "Green Potion"     => "Green",
+            "Blue Potion"      => "Blue",
+            "Poe"              => "Poe",
+            "Big Poe"          => "Big Poe",
+            "Blue Fire"        => "B.Fire",
+            "Fairy"            => "Fairy",
+            "Fish"             => "Fish",
+            "Bugs"             => "Bugs",
+            "Zora Egg"         => "Egg",
+            "Seahorse"         => "Horse",
+            "Deku Princess"    => "Princess",
+            "Magic Mushroom"   => "Mushroom",
+            "Spring Water"     => "Spring",
+            "Hot Spring Water" => "Hot",
+            _ => content.Length > 6 ? content.Substring(0, 6) : content,
+        };
+
+        // Synchronizes Bombchu with bombs in bombBag mode (global search)
+        private static void SyncBombchu(TrackerItem changedItem)        {
             foreach (var kv in _globalItems)
             {
                 var bombchu = kv.Value;
@@ -377,6 +491,7 @@ namespace OoTMMTracker.Controls
             // AllRewardIcons indices: 1-3=stones, 4-9=medallions, 10-13=remains
             if (cond.Stones || cond.Medallions || cond.Remains)
             {
+                // Standard mode: dungeon blocks with reward selection
                 foreach (var kv in _globalItems)
                 {
                     var item = kv.Value;
@@ -386,6 +501,29 @@ namespace OoTMMTracker.Controls
                     bool isRemains   = item.RewardIndex >= 10 && item.RewardIndex <= 13;
                     if ((cond.Stones && isStone) || (cond.Medallions && isMedallion) || (cond.Remains && isRemains))
                         score++;
+                }
+                // Rewards anywhere mode: standalone reward items
+                if (cond.Stones)
+                {
+                    if (_globalItems.TryGetValue("reward_kokiris_emerald",  out var r) && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_gorons_ruby",      out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_zoras_sapphire",   out r)     && r.IsCollected) score++;
+                }
+                if (cond.Medallions)
+                {
+                    if (_globalItems.TryGetValue("reward_light_medallion",  out var r) && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_forest_medallion", out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_fire_medallion",   out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_water_medallion",  out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_shadow_medallion", out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_spirit_medallion", out r)     && r.IsCollected) score++;
+                }
+                if (cond.Remains)
+                {
+                    if (_globalItems.TryGetValue("reward_odolwas_remains",   out var r) && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_gohts_remains",     out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_gyorgs_remains",    out r)     && r.IsCollected) score++;
+                    if (_globalItems.TryGetValue("reward_twinmolds_remains", out r)     && r.IsCollected) score++;
                 }
             }
 
@@ -575,6 +713,15 @@ namespace OoTMMTracker.Controls
             {
                 if (item.IsDungeonReward)
                     progress[item.Id] = (item.DungeonCleared ? 100 : 0) + item.RewardIndex;
+                else if (item.IsBottle)
+                {
+                    // Encode: contentIndex * 10 + currentCount
+                    int contentIdx = item.BottleContentNames != null
+                        ? Array.IndexOf(item.BottleContentNames, item.BottleContent)
+                        : 0;
+                    if (contentIdx < 0) contentIdx = item.BottleContentNames!.Length - 1; // empty
+                    progress[item.Id] = contentIdx * 10 + item.CurrentCount;
+                }
                 else
                     progress[item.Id] = item.CurrentCount;
             }
@@ -591,6 +738,19 @@ namespace OoTMMTracker.Controls
                         item.DungeonCleared = val >= 100;
                         item.RewardIndex = val % 100;
                     }
+                    else if (item.IsBottle)
+                    {
+                        int contentIdx = val / 10;
+                        int count = val % 10;
+                        if (item.BottleContentNames != null && contentIdx < item.BottleContentNames.Length)
+                        {
+                            item.BottleContent = item.BottleContentNames[contentIdx];
+                            if (item.BottleContentIcons != null)
+                                item.IconPath = item.BottleContentIcons[contentIdx];
+                            item.MaxCount = (item.BottleContent is "Ruto's Letter" or "Gold Dust") ? 2 : 1;
+                        }
+                        item.CurrentCount = Math.Min(count, item.MaxCount);
+                    }
                     else
                         item.CurrentCount = Math.Min(val, item.MaxCount);
                 }
@@ -601,7 +761,8 @@ namespace OoTMMTracker.Controls
                     RefreshIcon(pb, item2);
                     pb.Invalidate();
                 }
-            SyncGanonBk();
+            if (!IsBroadcast)
+                SyncGanonBk();
         }
     }
 }
