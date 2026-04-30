@@ -40,7 +40,7 @@ A tracker application for OoTMM (Ocarina of Time + Majora's Mask) randomizer.
 1. Install [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) or higher
 2. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/OoTMMTracker.git
+   git clone https://github.com/Memych/OoTMMTracker.git
    cd OoTMMTracker
    ```
 3. Build the project:
