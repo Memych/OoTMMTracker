@@ -448,7 +448,7 @@ namespace OoTMMTracker.Services
                         M("Wonder.png", 569, 562, 24, "OOT Gerudo Fortress Wonder Item Break Room Top", "Gerudo Fortress Wonder Item Break Room Top"),
                         M("Wonder.png", 400, 148, 24, "OOT Gerudo Fortress Wonder Item Kitchen Skull", "Gerudo Fortress Wonder Item Kitchen Skull"),
                         M("Wonder.png", 300, 148, 24, "OOT Gerudo Fortress Wonder Item Kitchen Soup", "Gerudo Fortress Wonder Item Kitchen Soup"),
-                        M("Crate.png", 577, 201, 24, "OOT Thieves Hideout Crate Jail 1", "Thieves Hideout Crate Jail 1"),
+                        M("Crate.png", 636, 379, 24, "OOT Thieves Hideout Crate Jail 1", "Thieves Hideout Crate Jail 1"),
                         M("Crate.png", 547, 76, 24, "OOT Thieves Hideout Crate Jail 2 1", "Thieves Hideout Crate Jail 2 1"),
                         M("Crate.png", 571, 76, 24, "OOT Thieves Hideout Crate Jail 2 2", "Thieves Hideout Crate Jail 2 2"),
                         M("Crate.png", 418, 373, 24, "OOT Thieves Hideout Crate Jail 3", "Thieves Hideout Crate Jail 3"),
