@@ -179,111 +179,7 @@ namespace OoTMMTracker.Forms
             InitializeComponent();
         }
 
-        private static TrackerConfig Copy(TrackerConfig c) => new()
-        {
-            Games = c.Games,
-            OotExtraChildSwords = c.OotExtraChildSwords, OotSpinUpgrade = c.OotSpinUpgrade,            OotBronzeScale = c.OotBronzeScale, OotPreplantedBeans = c.OotPreplantedBeans, MmStrength = c.MmStrength, MmScales = c.MmScales,
-            MmStoneAgony = c.MmStoneAgony, MmGoronTunic = c.MmGoronTunic, MmZoraTunic = c.MmZoraTunic,
-            MmIronBoots = c.MmIronBoots, MmHoverBoots = c.MmHoverBoots, MmDekuShield = c.MmDekuShield,
-            MmSticksNuts = c.MmSticksNuts, MmShortHookshot = c.MmShortHookshot,
-            MmHammer = c.MmHammer, MmFairyFountain = c.MmFairyFountain,
-            MmSpellFire = c.MmSpellFire, MmSpellWind = c.MmSpellWind, MmSpellLove = c.MmSpellLove,
-            ClocksEnabled = c.ClocksEnabled, OwlShuffle = c.OwlShuffle, OwlPreActivated = c.OwlPreActivated, TingleMaps = c.TingleMaps,
-            MmSunSong = c.MmSunSong, MmFairyOcarina = c.MmFairyOcarina, OotElegy = c.OotElegy,
-            ProgressiveGoronLullaby = c.ProgressiveGoronLullaby,
-            FreeScarecrowOot = c.FreeScarecrowOot, FreeScarecrowMm = c.FreeScarecrowMm,
-            SharedSongEpona = c.SharedSongEpona, SharedSongStorms = c.SharedSongStorms,
-            SharedSongTime = c.SharedSongTime, SharedSongSun = c.SharedSongSun,
-            SharedSongElegy = c.SharedSongElegy, SharedScarecrow = c.SharedScarecrow,
-            OotOcarinaButtons = c.OotOcarinaButtons, MmOcarinaButtons = c.MmOcarinaButtons,
-            SharedOcarinaButtons = c.SharedOcarinaButtons, SongsAsNotes = c.SongsAsNotes,
-            ChildWallet = c.ChildWallet, ColossalWallet = c.ColossalWallet, BottomlessWallet = c.BottomlessWallet,
-            SharedHealth = c.SharedHealth, SharedSwords = c.SharedSwords, SharedShields = c.SharedShields,
-            SharedStrength = c.SharedStrength, SharedScales = c.SharedScales, SharedWallets = c.SharedWallets,
-            SharedMagic = c.SharedMagic, SharedTunicGoron = c.SharedTunicGoron, SharedTunicZora = c.SharedTunicZora,
-            SharedBootsIron = c.SharedBootsIron, SharedBootsHover = c.SharedBootsHover,
-            SharedHookshot = c.SharedHookshot, SharedBows = c.SharedBows, SharedBombBags = c.SharedBombBags,
-            SharedOcarina = c.SharedOcarina, SharedHammer = c.SharedHammer, SharedBottles = c.SharedBottles,
-            SharedNutsSticks = c.SharedNutsSticks, SharedBombchu = c.SharedBombchu,
-            SharedFireArrows = c.SharedFireArrows, SharedIceArrows = c.SharedIceArrows,
-            SharedLightArrows = c.SharedLightArrows, SharedLens = c.SharedLens,
-            SharedSpellFire = c.SharedSpellFire, SharedSpellWind = c.SharedSpellWind, SharedSpellLove = c.SharedSpellLove,
-            SharedStoneAgony = c.SharedStoneAgony, SharedSpinUpgrade = c.SharedSpinUpgrade,
-            OotBlastMask = c.OotBlastMask, OotStoneMask = c.OotStoneMask,
-            SharedMaskGoron = c.SharedMaskGoron, SharedMaskZora = c.SharedMaskZora,
-            SharedMaskBunny = c.SharedMaskBunny, SharedMaskKeaton = c.SharedMaskKeaton,
-            SharedMaskTruth = c.SharedMaskTruth, SharedMaskBlast = c.SharedMaskBlast,
-            SharedMaskStone = c.SharedMaskStone,
-            GoldSkulltulas  = c.GoldSkulltulas,
-            MmSkulltulas    = c.MmSkulltulas,
-            PlatinumTokenOot   = c.PlatinumTokenOot,
-            PlatinumTokenMm    = c.PlatinumTokenMm,
-            SharedPlatinumToken = c.SharedPlatinumToken,
-            StrayFairiesDungeons = c.StrayFairiesDungeons,
-            StrayFairyTown       = c.StrayFairyTown,
-            TranscendentFairy    = c.TranscendentFairy,
-            CoinsRed    = c.CoinsRed,    CoinsRedMax    = c.CoinsRedMax,
-            CoinsGreen  = c.CoinsGreen,  CoinsGreenMax  = c.CoinsGreenMax,
-            CoinsBlue   = c.CoinsBlue,   CoinsBlueMax   = c.CoinsBlueMax,
-            CoinsYellow = c.CoinsYellow, CoinsYellowMax = c.CoinsYellowMax,
-            TriforceMode     = c.TriforceMode,
-            TriforceHuntGoal = c.TriforceHuntGoal,
-            OotSkipZelda    = c.OotSkipZelda,
-            OotOpenKakariko = c.OotOpenKakariko,
-            OotEggShuffle   = c.OotEggShuffle,
-            BombchuBehaviorOot = c.BombchuBehaviorOot,
-            BombchuBehaviorMm  = c.BombchuBehaviorMm,
-            MapsCompasses   = c.MapsCompasses,
-            SmallKeysOot    = c.SmallKeysOot,
-            SmallKeysMm     = c.SmallKeysMm,
-            BossKeysOot     = c.BossKeysOot,
-            BossKeysMm      = c.BossKeysMm,
-            Keysanity       = c.Keysanity,
-            SmallKeysHideout       = c.SmallKeysHideout,
-            SmallKeysTcg           = c.SmallKeysTcg,
-            SilverRupees           = c.SilverRupees,
-            SkeletonKeyOot         = c.SkeletonKeyOot,
-            SkeletonKeyMm          = c.SkeletonKeyMm,
-            SharedSkeletonKey      = c.SharedSkeletonKey,
-            MagicalRupee           = c.MagicalRupee,
-            SoulsBossOot     = c.SoulsBossOot,    SoulsBossMm      = c.SoulsBossMm,
-            SoulsEnemyOot    = c.SoulsEnemyOot,   SoulsEnemyMm     = c.SoulsEnemyMm,   SharedSoulsEnemy  = c.SharedSoulsEnemy,
-            SoulsNpcOot      = c.SoulsNpcOot,     SoulsNpcMm       = c.SoulsNpcMm,     SharedSoulsNpc    = c.SharedSoulsNpc,
-            SoulsAnimalOot   = c.SoulsAnimalOot,  SoulsAnimalMm    = c.SoulsAnimalMm,  SharedSoulsAnimal = c.SharedSoulsAnimal,
-            SoulsMiscOot     = c.SoulsMiscOot,    SoulsMiscMm      = c.SoulsMiscMm,    SharedSoulsMisc   = c.SharedSoulsMisc,
-            SrPouchPacks           = new List<string>(c.SrPouchPacks),
-            MqDungeons             = new List<string>(c.MqDungeons),
-            KeyRingsOot            = c.KeyRingsOot,
-            KeyRingsMm             = c.KeyRingsMm,
-            KeyRingDungeons        = new List<string>(c.KeyRingDungeons),
-            GanonBossKey           = c.GanonBossKey,
-            DungeonRewardShuffle   = c.DungeonRewardShuffle,
-            SongEventsShuffleOot   = c.SongEventsShuffleOot,
-            GanonBkRequired        = c.GanonBkRequired,
-            GanonBk = new GanonBkConditions
-            {
-                Count          = c.GanonBk?.Count          ?? 0,
-                Stones         = c.GanonBk?.Stones         ?? false,
-                Medallions     = c.GanonBk?.Medallions     ?? false,
-                Remains        = c.GanonBk?.Remains        ?? false,
-                SkullsGold     = c.GanonBk?.SkullsGold     ?? false,
-                SkullsSwamp    = c.GanonBk?.SkullsSwamp    ?? false,
-                SkullsOcean    = c.GanonBk?.SkullsOcean    ?? false,
-                FairiesWF      = c.GanonBk?.FairiesWF      ?? false,
-                FairiesSH      = c.GanonBk?.FairiesSH      ?? false,
-                FairiesGB      = c.GanonBk?.FairiesGB      ?? false,
-                FairiesST      = c.GanonBk?.FairiesST      ?? false,
-                FairyTown      = c.GanonBk?.FairyTown      ?? false,
-                MasksRegular   = c.GanonBk?.MasksRegular   ?? false,
-                MasksTransform = c.GanonBk?.MasksTransform ?? false,
-                MasksOot       = c.GanonBk?.MasksOot       ?? false,
-                CoinsRed       = c.GanonBk?.CoinsRed       ?? false,
-                CoinsGreen     = c.GanonBk?.CoinsGreen     ?? false,
-                CoinsBlue      = c.GanonBk?.CoinsBlue      ?? false,
-                CoinsYellow    = c.GanonBk?.CoinsYellow    ?? false,
-                Triforce       = c.GanonBk?.Triforce       ?? false,
-            },
-        };
+        private static TrackerConfig Copy(TrackerConfig c) => c.Clone();
 
         private void InitializeComponent()
         {
@@ -391,35 +287,27 @@ namespace OoTMMTracker.Forms
             _chkSharedSwords     = AddCheckRight(panelShared, "Swords (sharedSwords)", Config.SharedSwords, y);
             NextRow(ref y);
             // Shared swords available if OoT progression enabled (MM always has 3 steps)
-            _chkSharedSwords.Enabled = Config.OotExtraChildSwords;
-            _chkOotExtraSwords.CheckedChanged += (s, e) => { _chkSharedSwords.Enabled = _chkOotExtraSwords.Checked; if (!_chkOotExtraSwords.Checked) _chkSharedSwords.Checked = false; };
-            _chkSharedShields    = AddCheckLeft(panelShared, "Shields (sharedShields)", Config.SharedShields, ref y);
+            LinkEnabled(_chkSharedSwords, _chkOotExtraSwords);            _chkSharedShields    = AddCheckLeft(panelShared, "Shields (sharedShields)", Config.SharedShields, ref y);
             _chkSharedStrength   = AddCheckRight(panelShared, "Strength (sharedStrength)", Config.SharedStrength, y);
             NextRow(ref y);
-            _chkSharedStrength.Enabled = Config.MmStrength;
-            _chkMmStrength.CheckedChanged += (s, e) => { _chkSharedStrength.Enabled = _chkMmStrength.Checked; if (!_chkMmStrength.Checked) _chkSharedStrength.Checked = false; };
+            LinkEnabled(_chkSharedStrength, _chkMmStrength);
             _chkSharedScales     = AddCheckLeft(panelShared, "Scales (sharedScales)", Config.SharedScales, ref y);
             _chkSharedWallets    = AddCheckRight(panelShared, "Wallets (sharedWallets)", Config.SharedWallets, y);
             NextRow(ref y);
-            _chkSharedScales.Enabled = Config.MmScales;
-            _chkMmScales.CheckedChanged += (s, e) => { _chkSharedScales.Enabled = _chkMmScales.Checked; if (!_chkMmScales.Checked) _chkSharedScales.Checked = false; };
+            LinkEnabled(_chkSharedScales, _chkMmScales);
             _chkSharedMagic      = AddCheckLeft(panelShared, "Magic (sharedMagic)", Config.SharedMagic, ref y);
             _chkSharedTunicGoron = AddCheckRight(panelShared, "Goron Tunic (sharedTunicGoron)", Config.SharedTunicGoron, y);
             NextRow(ref y);
-            _chkSharedTunicGoron.Enabled = Config.MmGoronTunic;
-            _chkMmGoronTunic.CheckedChanged += (s, e) => { _chkSharedTunicGoron.Enabled = _chkMmGoronTunic.Checked; if (!_chkMmGoronTunic.Checked) _chkSharedTunicGoron.Checked = false; };
+            LinkEnabled(_chkSharedTunicGoron, _chkMmGoronTunic);
             _chkSharedTunicZora  = AddCheckLeft(panelShared, "Zora Tunic (sharedTunicZora)", Config.SharedTunicZora, ref y);
             _chkSharedBootsIron  = AddCheckRight(panelShared, "Iron Boots (sharedBootsIron)", Config.SharedBootsIron, y);
             NextRow(ref y);
-            _chkSharedTunicZora.Enabled = Config.MmZoraTunic;
-            _chkMmZoraTunic.CheckedChanged += (s, e) => { _chkSharedTunicZora.Enabled = _chkMmZoraTunic.Checked; if (!_chkMmZoraTunic.Checked) _chkSharedTunicZora.Checked = false; };
-            _chkSharedBootsIron.Enabled = Config.MmIronBoots;
-            _chkMmIronBoots.CheckedChanged += (s, e) => { _chkSharedBootsIron.Enabled = _chkMmIronBoots.Checked; if (!_chkMmIronBoots.Checked) _chkSharedBootsIron.Checked = false; };
+            LinkEnabled(_chkSharedTunicZora, _chkMmZoraTunic);
+            LinkEnabled(_chkSharedBootsIron, _chkMmIronBoots);
             _chkSharedBootsHover = AddCheckLeft(panelShared, "Hover Boots (sharedBootsHover)", Config.SharedBootsHover, ref y);
             _chkSharedHookshot   = AddCheckRight(panelShared, "Hookshot (sharedHookshot)", Config.SharedHookshot, y);
             NextRow(ref y);
-            _chkSharedBootsHover.Enabled = Config.MmHoverBoots;
-            _chkMmHoverBoots.CheckedChanged += (s, e) => { _chkSharedBootsHover.Enabled = _chkMmHoverBoots.Checked; if (!_chkMmHoverBoots.Checked) _chkSharedBootsHover.Checked = false; };
+            LinkEnabled(_chkSharedBootsHover, _chkMmHoverBoots);
             _chkSharedBows       = AddCheckLeft(panelShared, "Bows (sharedBows)", Config.SharedBows, ref y);
             _chkSharedBombBags   = AddCheckRight(panelShared, "Bomb Bags (sharedBombBags)", Config.SharedBombBags, y);
             NextRow(ref y);
@@ -438,18 +326,14 @@ namespace OoTMMTracker.Forms
             _chkSharedSpellFire  = AddCheckLeft(panelShared, "Din's Fire (sharedSpellFire)", Config.SharedSpellFire, ref y);
             _chkSharedSpellWind  = AddCheckRight(panelShared, "Farore's Wind (sharedSpellWind)", Config.SharedSpellWind, y);
             NextRow(ref y);
-            _chkSharedSpellFire.Enabled = Config.MmSpellFire;
-            _chkMmSpellFire.CheckedChanged += (s, e) => { _chkSharedSpellFire.Enabled = _chkMmSpellFire.Checked; if (!_chkMmSpellFire.Checked) _chkSharedSpellFire.Checked = false; };
-            _chkSharedSpellWind.Enabled = Config.MmSpellWind;
-            _chkMmSpellWind.CheckedChanged += (s, e) => { _chkSharedSpellWind.Enabled = _chkMmSpellWind.Checked; if (!_chkMmSpellWind.Checked) _chkSharedSpellWind.Checked = false; };
+            LinkEnabled(_chkSharedSpellFire, _chkMmSpellFire);
+            LinkEnabled(_chkSharedSpellWind, _chkMmSpellWind);
             _chkSharedSpellLove  = AddCheckLeft(panelShared, "Nayru's Love (sharedSpellLove)", Config.SharedSpellLove, ref y);
             _chkSharedStoneAgony = AddCheckRight(panelShared, "Stone of Agony (sharedStoneAgony)", Config.SharedStoneAgony, y);
             NextRow(ref y);
-            _chkSharedSpellLove.Enabled = Config.MmSpellLove;
-            _chkMmSpellLove.CheckedChanged += (s, e) => { _chkSharedSpellLove.Enabled = _chkMmSpellLove.Checked; if (!_chkMmSpellLove.Checked) _chkSharedSpellLove.Checked = false; };
+            LinkEnabled(_chkSharedSpellLove, _chkMmSpellLove);
             _chkSharedSpinUpgrade= AddCheckFull(panelShared, "Great Spin Attack (sharedSpinUpgrade)", Config.SharedSpinUpgrade, ref y);
-            _chkSharedSpinUpgrade.Enabled = Config.OotSpinUpgrade;
-            _chkOotSpinUpgrade.CheckedChanged += (s, e) => { _chkSharedSpinUpgrade.Enabled = _chkOotSpinUpgrade.Checked; if (!_chkOotSpinUpgrade.Checked) _chkSharedSpinUpgrade.Checked = false; };
+            LinkEnabled(_chkSharedSpinUpgrade, _chkOotSpinUpgrade);
 
             y += 8;
             AddSection(panelShared, "Combined masks", ref y);
@@ -581,8 +465,7 @@ namespace OoTMMTracker.Forms
             _chkSmallKeysMm  = AddCheckRight(panelDungeons, "Small Keys MM (smallKeyShuffleMm)", Config.SmallKeysMm, y);
             NextRow(ref y);
             _chkKeysanity    = AddCheckFull(panelDungeons, "Keysanity — Fire Temple 8 keys (smallKeyShuffleOot: anywhere)", Config.Keysanity, ref y);
-            _chkKeysanity.Enabled = Config.SmallKeysOot;
-            _chkSmallKeysOot.CheckedChanged += (s, e) => { _chkKeysanity.Enabled = _chkSmallKeysOot.Checked; if (!_chkSmallKeysOot.Checked) _chkKeysanity.Checked = false; };
+            LinkEnabled(_chkKeysanity, _chkSmallKeysOot);
 
             y += 8;
             AddSection(panelDungeons, "Silver Rupees", ref y);
@@ -605,8 +488,7 @@ namespace OoTMMTracker.Forms
             panelDungeons.Controls.Add(lblMR);
             y += 20;
             _chkMagicalRupee = AddCheck(panelDungeons, "Magical Rupee (magicalRupee)", Config.MagicalRupee, ref y);
-            _chkMagicalRupee.Enabled = Config.SilverRupees;
-            _chkSilverRupees.CheckedChanged += (s, e) => { _chkMagicalRupee.Enabled = _chkSilverRupees.Checked; if (!_chkSilverRupees.Checked) _chkMagicalRupee.Checked = false; };
+            LinkEnabled(_chkMagicalRupee, _chkSilverRupees);
 
             y += 8;
             AddSection(panelDungeons, "Silver Rupee Pouches", ref y);
@@ -683,16 +565,24 @@ namespace OoTMMTracker.Forms
             NextRow(ref y);
 
             y += 8;
-            AddSection(panelDungeons, "Ganon's key (ganonBossKey)", ref y);
-            _chkGanonBkAnywhere = AddCheckLeft(panelDungeons, "Anywhere", Config.GanonBossKey == "anywhere", ref y);
-            _chkGanonBkCustom   = AddCheckRight(panelDungeons, "Custom", Config.GanonBossKey == "custom", y);
-            NextRow(ref y);
-            // Mutual exclusion: if one is checked, uncheck the other
-            _chkGanonBkAnywhere.CheckedChanged += (s, e) => { if (_chkGanonBkAnywhere.Checked) _chkGanonBkCustom.Checked = false; };
-            _chkGanonBkCustom.CheckedChanged   += (s, e) => { if (_chkGanonBkCustom.Checked) _chkGanonBkAnywhere.Checked = false; };
-            // If neither is checked = vanilla (default)
-
-            y += 8;
+            if (Config.HasOot)
+            {
+                AddSection(panelDungeons, "Ganon's key (ganonBossKey)", ref y);
+                _chkGanonBkAnywhere = AddCheckLeft(panelDungeons, "Anywhere", Config.GanonBossKey == "anywhere", ref y);
+                _chkGanonBkCustom   = AddCheckRight(panelDungeons, "Custom", Config.GanonBossKey == "custom", y);
+                NextRow(ref y);
+                // Mutual exclusion: if one is checked, uncheck the other
+                _chkGanonBkAnywhere.CheckedChanged += (s, e) => { if (_chkGanonBkAnywhere.Checked) _chkGanonBkCustom.Checked = false; };
+                _chkGanonBkCustom.CheckedChanged   += (s, e) => { if (_chkGanonBkCustom.Checked) _chkGanonBkAnywhere.Checked = false; };
+                // If neither is checked = vanilla (default)
+                y += 8;
+            }
+            else
+            {
+                // Initialize with defaults to avoid null refs in ApplyConfig
+                _chkGanonBkAnywhere = new CheckBox();
+                _chkGanonBkCustom   = new CheckBox();
+            }
             AddSection(panelDungeons, "Dungeon Rewards", ref y);
             _chkDungeonRewardShuffle = AddCheckFull(panelDungeons, "Rewards anywhere (dungeonRewardShuffle: anywhere)", Config.DungeonRewardShuffle, ref y);
 
@@ -780,7 +670,9 @@ namespace OoTMMTracker.Forms
             var tabSC = new TabPage("Special Cond.");
             var panelSC = MakeScrollPanel();
             tabSC.Controls.Add(panelSC);
-            tabs.TabPages.Add(tabSC);
+            // Special Conditions only relevant for OoT (Ganon's Castle is OoT-exclusive)
+            if (Config.HasOot)
+                tabs.TabPages.Add(tabSC);
 
             y = 8;
             var lblSC = new Label { Text = "Conditions for Custom Ganon BK.\nFilled automatically from log.\nCan be configured manually for testing.", ForeColor = Color.Gray, Location = new Point(8, y), AutoSize = true };
@@ -990,10 +882,8 @@ namespace OoTMMTracker.Forms
             // These must be set up after all tabs are created
             
             // Shared songs dependencies
-            _chkSharedSongSun.Enabled = Config.MmSunSong;
-            _chkMmSunSong.CheckedChanged += (s, e) => { _chkSharedSongSun.Enabled = _chkMmSunSong.Checked; if (!_chkMmSunSong.Checked) _chkSharedSongSun.Checked = false; };
-            _chkSharedSongElegy.Enabled = Config.OotElegy;
-            _chkOotElegy.CheckedChanged += (s, e) => { _chkSharedSongElegy.Enabled = _chkOotElegy.Checked; if (!_chkOotElegy.Checked) _chkSharedSongElegy.Checked = false; };
+            LinkEnabled(_chkSharedSongSun, _chkMmSunSong);
+            LinkEnabled(_chkSharedSongElegy, _chkOotElegy);
             
             // Shared platinum token dependencies
             _chkSharedPlatinum.Enabled = Config.PlatinumTokenOot && Config.PlatinumTokenMm;
@@ -1672,6 +1562,21 @@ namespace OoTMMTracker.Forms
         {
             var p = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             return p;
+        }
+
+        /// <summary>
+        /// Links a "shared" checkbox to a "source" checkbox:
+        /// - shared is enabled only when source is checked
+        /// - when source is unchecked, shared is automatically unchecked
+        /// </summary>
+        private static void LinkEnabled(CheckBox shared, CheckBox source)
+        {
+            shared.Enabled = source.Checked;
+            source.CheckedChanged += (s, e) =>
+            {
+                shared.Enabled = source.Checked;
+                if (!source.Checked) shared.Checked = false;
+            };
         }
 
         private static void AddSection(Panel panel, string text, ref int y)
