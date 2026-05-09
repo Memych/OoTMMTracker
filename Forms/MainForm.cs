@@ -22,6 +22,10 @@ namespace OoTMMTracker.Forms
         private ComboBox _cmbRegionFilter = null!;
         private ComboBox _cmbFoundFilter  = null!;
         private CheckBox _chkHideItems    = null!;
+        private ComboBox _cmbMapRegion    = null!;
+        private ComboBox _cmbMapSub       = null!;
+        private ComboBox _cmbMapGame      = null!;
+        private Action?  _updateMapCounters;
         private CheckBox _chkColorHighlight = null!;
         private Label    _lblCounter      = null!;
         private TabControl _tabControl = null!;
@@ -34,14 +38,15 @@ namespace OoTMMTracker.Forms
         private DataGridView _dgvEntrances = null!;
         private DataGridView _dgvSongEvents = null!;
         private Label _lblInfo = null!;
-        private Label _lblZoomMain = null!;
         private Panel _trackerScrollPanel = null!;
         private Panel _leftPanel = null!;
+        private Controls.MapTrackerPanel _mapTrackerPanel = null!;
         private TrackerConfig _currentTrackerConfig = new();
         private BroadcastForm? _broadcastForm;
-        private System.Windows.Forms.Timer? _broadcastTimer;
         // Found locations: key = "Game|Location"
         private readonly HashSet<string> _foundLocations = new HashSet<string>();
+        private HashSet<string> _knownLocations   = new HashSet<string>();
+        private HashSet<string> _coloredLocations = new HashSet<string>();
         private string? _currentSpoilerLogPath;
         // Song events: location name → song name
         private readonly Dictionary<string, string> _songEvents = new();
@@ -116,183 +121,90 @@ namespace OoTMMTracker.Forms
         {
             this.Text = "OoTMM Tracker";
             this.Size = new Size(1600, 900);
+            this.MinimumSize = new Size(900, 400);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.WindowState = FormWindowState.Maximized;
+            // Ensure maximized on all DPI settings
+            this.Load += (s, e) => { this.WindowState = FormWindowState.Maximized; };
             
-            // Header — one row with buttons
-            var topPanel = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = Color.FromArgb(45, 45, 45) };
-            
-            // Row 1: buttons
-            _btnLoadFile = new Button { Text = "Load Spoiler Log", Location = new Point(8, 8), Size = new Size(180, 28),
-                BackColor = Color.FromArgb(60, 80, 100), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-            _btnLoadFile.Click += BtnLoadFile_Click;
-            topPanel.Controls.Add(_btnLoadFile);
-            
-            var btnTrackerOptions = new Button
+            // ── Menu Bar ─────────────────────────────────────────────────────
+            var menuStrip = new MenuStrip
             {
-                Text = "Tracker Options",
-                Location = new Point(196, 8),
-                Size = new Size(140, 28),
-                BackColor = Color.FromArgb(50, 60, 80),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
+                BackColor = Color.FromArgb(35, 35, 35),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                RenderMode = ToolStripRenderMode.Professional,
+                Renderer = new ToolStripProfessionalRenderer(new DarkMenuColorTable()),
             };
-            btnTrackerOptions.Click += BtnTrackerOptions_Click;
-            topPanel.Controls.Add(btnTrackerOptions);
-            
-            var btnResetTracker = new Button
-            {
-                Text = "Reset Tracker",
-                Location = new Point(344, 8),
-                Size = new Size(120, 28),
-                BackColor = Color.FromArgb(80, 40, 40),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnResetTracker.Click += BtnResetTracker_Click;
-            topPanel.Controls.Add(btnResetTracker);
 
-            var btnResetProgress = new Button
-            {
-                Text = "Reset Progress",
-                Location = new Point(472, 8),
-                Size = new Size(130, 28),
-                BackColor = Color.FromArgb(80, 55, 20),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnResetProgress.Click += BtnResetProgress_Click;
-            topPanel.Controls.Add(btnResetProgress);
+            // File
+            var menuFile = new ToolStripMenuItem("File") { ForeColor = Color.FromArgb(220, 220, 220) };
+            var miLoadLog = new ToolStripMenuItem("Load Spoiler Log") { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F1", ShowShortcutKeys = true };
+            var miSave    = new ToolStripMenuItem("Save")             { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F2", ShowShortcutKeys = true };
+            var miLoad    = new ToolStripMenuItem("Load")             { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F4", ShowShortcutKeys = true };            miLoadLog.Click += BtnLoadFile_Click;
+            miSave.Click    += BtnSave_Click;
+            miLoad.Click    += BtnLoad_Click;
+            menuFile.DropDownItems.AddRange(new ToolStripItem[] { miLoadLog, new ToolStripSeparator(), miSave, miLoad });
 
-            var btnSave = new Button
-            {
-                Text = "Save",
-                Location = new Point(610, 8),
-                Size = new Size(90, 28),
-                BackColor = Color.FromArgb(40, 80, 40),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnSave.Click += BtnSave_Click;
-            topPanel.Controls.Add(btnSave);
+            // Reset
+            var menuReset = new ToolStripMenuItem("Reset") { ForeColor = Color.FromArgb(220, 220, 220) };
+            var miResetAll      = new ToolStripMenuItem("Reset All")      { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F5", ShowShortcutKeys = true };
+            var miResetTracker  = new ToolStripMenuItem("Reset Tracker")  { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F7", ShowShortcutKeys = true };
+            var miResetProgress = new ToolStripMenuItem("Reset Progress") { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F8", ShowShortcutKeys = true };
+            var miResetLog      = new ToolStripMenuItem("Reset Log")      { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F6", ShowShortcutKeys = true };
+            miResetAll.Click      += BtnResetAll_Click;
+            miResetTracker.Click  += BtnResetTracker_Click;
+            miResetProgress.Click += BtnResetProgress_Click;
+            miResetLog.Click      += BtnResetLog_Click;
+            menuReset.DropDownItems.AddRange(new ToolStripItem[] { miResetAll, new ToolStripSeparator(), miResetTracker, miResetProgress, new ToolStripSeparator(), miResetLog });
 
-            var btnLoad = new Button
-            {
-                Text = "Load",
-                Location = new Point(708, 8),
-                Size = new Size(90, 28),
-                BackColor = Color.FromArgb(40, 60, 80),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnLoad.Click += BtnLoad_Click;
-            topPanel.Controls.Add(btnLoad);
-
-            var btnBroadcast = new Button
-            {
-                Text = "Broadcast",
-                Location = new Point(806, 8),
-                Size = new Size(90, 28),
-                BackColor = Color.FromArgb(60, 40, 80),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnBroadcast.Click += (s, e) =>
+            // Tracker
+            var menuTracker = new ToolStripMenuItem("Tracker") { ForeColor = Color.FromArgb(220, 220, 220) };
+            var miOptions   = new ToolStripMenuItem("Options")    { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F3",       ShowShortcutKeys = true };
+            var miBroadcast = new ToolStripMenuItem("Broadcast")  { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "F9",       ShowShortcutKeys = true };
+            var miZoomIn    = new ToolStripMenuItem("Zoom In")    { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "Shift + '+'", ShowShortcutKeys = true };
+            var miZoomOut   = new ToolStripMenuItem("Zoom Out")   { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "Shift + '-'", ShowShortcutKeys = true };
+            var miZoomReset = new ToolStripMenuItem("Reset Zoom") { ForeColor = Color.FromArgb(220, 220, 220), ShortcutKeyDisplayString = "Shift + '0'", ShowShortcutKeys = true };
+            miOptions.Click   += BtnTrackerOptions_Click;
+            miBroadcast.Click += (s, e) =>
             {
                 if (_broadcastForm == null || _broadcastForm.IsDisposed)
                 {
                     _broadcastForm = new BroadcastForm();
-                    _lastBroadcastConfig = null; // force rebuild
+                    _lastBroadcastConfig = null;
+                    _lastBroadcastItemSize = -1;
                     _broadcastForm.Show(this);
                     UpdateBroadcast();
                 }
-                else
-                {
-                    _broadcastForm.Focus();
-                }
+                else _broadcastForm.Focus();
             };
-            topPanel.Controls.Add(btnBroadcast);
-
-            var btnZoomOut = new Button
-            {
-                Text = "−",
-                Location = new Point(904, 8),
-                Size = new Size(28, 28),
-                BackColor = Color.FromArgb(50, 50, 70),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Arial", 12, FontStyle.Bold)
-            };
-            btnZoomOut.Click += (s, e) =>
+            miZoomIn.Click += (s, e) =>
             {
                 var steps = ItemTrackerPanel.GetItemSizeSteps();
                 int cur = Array.IndexOf(steps, ItemTrackerPanel.GetItemSize());
-                if (cur > 0)
-                {
-                    ItemTrackerPanel.SetItemSize(steps[cur - 1]);
-                    _lblZoomMain.Text = $"{ItemTrackerPanel.GetItemSize()}px";
-                    RebuildTracker();
-                }
+                if (cur < steps.Length - 1) { ItemTrackerPanel.SetItemSize(steps[cur + 1]); RebuildTracker(); }
             };
-            topPanel.Controls.Add(btnZoomOut);
-
-            _lblZoomMain = new Label
-            {
-                Location = new Point(934, 11),
-                Size = new Size(44, 18),
-                ForeColor = Color.White,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 8f),
-                Text = $"{ItemTrackerPanel.GetItemSize()}px"
-            };
-            topPanel.Controls.Add(_lblZoomMain);
-
-            var btnZoomIn = new Button
-            {
-                Text = "+",
-                Location = new Point(980, 8),
-                Size = new Size(28, 28),
-                BackColor = Color.FromArgb(50, 50, 70),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Arial", 12, FontStyle.Bold)
-            };
-            btnZoomIn.Click += (s, e) =>
+            miZoomOut.Click += (s, e) =>
             {
                 var steps = ItemTrackerPanel.GetItemSizeSteps();
                 int cur = Array.IndexOf(steps, ItemTrackerPanel.GetItemSize());
-                if (cur < steps.Length - 1)
-                {
-                    ItemTrackerPanel.SetItemSize(steps[cur + 1]);
-                    _lblZoomMain.Text = $"{ItemTrackerPanel.GetItemSize()}px";
-                    RebuildTracker();
-                }
+                if (cur > 0) { ItemTrackerPanel.SetItemSize(steps[cur - 1]); RebuildTracker(); }
             };
-            topPanel.Controls.Add(btnZoomIn);
+            miZoomReset.Click += (s, e) => { ItemTrackerPanel.SetItemSize(48); RebuildTracker(); };
+            menuTracker.DropDownItems.AddRange(new ToolStripItem[] { miOptions, new ToolStripSeparator(), miBroadcast, new ToolStripSeparator(), miZoomIn, miZoomOut, miZoomReset });
 
-            var btnZoomReset = new Button
-            {
-                Text = "↺",
-                Location = new Point(1010, 8),
-                Size = new Size(28, 28),
-                BackColor = Color.FromArgb(50, 50, 70),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Arial", 11, FontStyle.Bold)
-            };
-            btnZoomReset.Click += (s, e) =>
-            {
-                ItemTrackerPanel.SetItemSize(48);
-                _lblZoomMain.Text = "48px";
-                RebuildTracker();
-            };
-            topPanel.Controls.Add(btnZoomReset);
-            
-            _lblInfo = new Label { Location = new Point(8, 44), Size = new Size(1400, 18), Text = "No file loaded", ForeColor = Color.FromArgb(180, 180, 180) };
-            topPanel.Controls.Add(_lblInfo);
-            
-            // Row 2: search and region — initialized below in searchPanel            
-            this.Controls.Add(topPanel);
+            // About
+            var menuAbout = new ToolStripMenuItem("About") { ForeColor = Color.FromArgb(220, 220, 220) };
+            var miCredits = new ToolStripMenuItem("Credits") { ForeColor = Color.FromArgb(220, 220, 220) };
+            miCredits.Click += (s, e) => new InfoForm().ShowDialog(this);
+            menuAbout.DropDownItems.Add(miCredits);
+
+            menuStrip.Items.AddRange(new ToolStripItem[] { menuFile, menuReset, menuTracker, menuAbout });
+            this.MainMenuStrip = menuStrip;
+
+            // Info bar — thin strip showing loaded log info
+            var infoBar = new Panel { Dock = DockStyle.Top, Height = 20, BackColor = Color.FromArgb(35, 35, 35) };
+            _lblInfo = new Label { Dock = DockStyle.Fill, Text = "No file loaded", ForeColor = Color.FromArgb(160, 160, 160), Font = new Font("Segoe UI", 8f), TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(6, 0, 0, 0) };
+            infoBar.Controls.Add(_lblInfo);
 
             // Search bar — initialized later inside rightContainer
             
@@ -305,22 +217,65 @@ namespace OoTMMTracker.Forms
             _leftPanel = new Panel { Dock = DockStyle.Left, Width = 540, BackColor = Color.FromArgb(30, 30, 30) };
             this.Controls.Add(_leftPanel);
 
+            // MenuStrip and infoBar — add last so they dock to top above everything
+            this.Controls.Add(infoBar);
+            this.Controls.Add(menuStrip);
+
             // Tracker inside left panel
             _trackerScrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(30, 30, 30) };
             _leftPanel.Controls.Add(_trackerScrollPanel);
             RebuildTracker();
             // Right panel: search + tabs
             var rightPanel = rightContainer;
-            var searchPanel = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(45, 45, 45) };
-            // searchPanel added to rightContainer later (after tabControl)
+            // Search panel: outer container with fixed height, inner panel scrolls horizontally
+            var searchPanel = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = Color.FromArgb(45, 45, 45) };
+            var searchInner = new Panel
+            {
+                Location  = new Point(0, 0),
+                Height    = 36,
+                Width     = 1210,
+                BackColor = Color.FromArgb(45, 45, 45)
+            };
+            var searchHScroll = new HScrollBar
+            {
+                Dock    = DockStyle.Bottom,
+                Height  = 16,
+                Minimum = 0,
+                Maximum = 1210,
+                SmallChange = 20,
+                LargeChange = 200,
+            };
+            searchHScroll.Scroll += (s, e) =>
+            {
+                searchInner.Location = new Point(-searchHScroll.Value, 0);
+            };
+            searchPanel.Controls.Add(searchInner);
+            searchPanel.Controls.Add(searchHScroll);
+            // Hide scrollbar when panel is wide enough, update Maximum dynamically
+            searchPanel.Resize += (s, e) =>
+            {
+                int overflow = searchInner.Width - searchPanel.Width;
+                searchHScroll.Visible = overflow > 0;
+                searchPanel.Height = searchHScroll.Visible ? 52 : 36;
+                if (overflow > 0)
+                {
+                    searchHScroll.Maximum = overflow + searchHScroll.LargeChange;
+                    searchHScroll.Value = Math.Min(searchHScroll.Value, overflow);
+                    searchInner.Location = new Point(-searchHScroll.Value, 0);
+                }
+                else
+                {
+                    searchInner.Location = new Point(0, 0);
+                }
+            };            // searchPanel added to rightContainer later (after tabControl)
 
             // Fill searchPanel
-            searchPanel.Controls.Add(new Label { Text = "Search:", Location = new Point(6, 10), Size = new Size(50, 20), ForeColor = Color.White });
+            searchInner.Controls.Add(new Label { Text = "Search:", Location = new Point(6, 10), Size = new Size(50, 20), ForeColor = Color.White });
             _txtSearch = new TextBox { Location = new Point(58, 7), Size = new Size(220, 22) };
             _txtSearch.TextChanged += TxtSearch_TextChanged;
-            searchPanel.Controls.Add(_txtSearch);
+            searchInner.Controls.Add(_txtSearch);
             
-            searchPanel.Controls.Add(new Label { Text = "Game:", Location = new Point(286, 10), Size = new Size(45, 20), ForeColor = Color.White });
+            searchInner.Controls.Add(new Label { Text = "Game:", Location = new Point(286, 10), Size = new Size(45, 20), ForeColor = Color.White });
             _cmbGameFilter = new ComboBox { Location = new Point(334, 7), Size = new Size(100, 22), DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbGameFilter.Items.AddRange(new object[] { "All", "OoT", "MM" });
             _cmbGameFilter.SelectedIndex = 0;
@@ -330,21 +285,21 @@ namespace OoTMMTracker.Forms
                 UpdateLocationsList(_txtSearch.Text);
             };
             _cmbGameFilter.Enabled = false; // Disabled until log is loaded with both games
-            searchPanel.Controls.Add(_cmbGameFilter);
+            searchInner.Controls.Add(_cmbGameFilter);
             
-            searchPanel.Controls.Add(new Label { Text = "Region:", Location = new Point(442, 10), Size = new Size(55, 20), ForeColor = Color.White });
+            searchInner.Controls.Add(new Label { Text = "Region:", Location = new Point(442, 10), Size = new Size(55, 20), ForeColor = Color.White });
             _cmbRegionFilter = new ComboBox { Location = new Point(500, 7), Size = new Size(220, 22), DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbRegionFilter.Items.Add("All Regions");
             _cmbRegionFilter.SelectedIndex = 0;
             _cmbRegionFilter.SelectedIndexChanged += CmbRegionFilter_SelectedIndexChanged;
-            searchPanel.Controls.Add(_cmbRegionFilter);
+            searchInner.Controls.Add(_cmbRegionFilter);
             
-            searchPanel.Controls.Add(new Label { Text = "Status:", Location = new Point(728, 10), Size = new Size(50, 20), ForeColor = Color.White });
+            searchInner.Controls.Add(new Label { Text = "Status:", Location = new Point(728, 10), Size = new Size(50, 20), ForeColor = Color.White });
             _cmbFoundFilter = new ComboBox { Location = new Point(780, 7), Size = new Size(120, 22), DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbFoundFilter.Items.AddRange(new object[] { "All", "Not Found", "Found" });
             _cmbFoundFilter.SelectedIndex = 0;
             _cmbFoundFilter.SelectedIndexChanged += (s, e) => UpdateLocationsList(_txtSearch.Text);
-            searchPanel.Controls.Add(_cmbFoundFilter);
+            searchInner.Controls.Add(_cmbFoundFilter);
 
             _chkHideItems = new CheckBox { Text = "Hide Items", Location = new Point(910, 9), Size = new Size(90, 18), ForeColor = Color.White };
             _chkHideItems.CheckedChanged += (s, e) =>
@@ -352,14 +307,20 @@ namespace OoTMMTracker.Forms
                 _dgvLocations.Columns["Item"]!.Visible = !_chkHideItems.Checked;
                 UpdateLocationsList(_txtSearch.Text);
             };
-            searchPanel.Controls.Add(_chkHideItems);
+            searchInner.Controls.Add(_chkHideItems);
 
             _chkColorHighlight = new CheckBox { Text = "Colors", Location = new Point(1008, 9), Size = new Size(70, 18), ForeColor = Color.White, Checked = false };
-            _chkColorHighlight.CheckedChanged += (s, e) => UpdateLocationsList(_txtSearch.Text);
-            searchPanel.Controls.Add(_chkColorHighlight);
+            _chkColorHighlight.CheckedChanged += (s, e) =>
+            {
+                UpdateLocationsList(_txtSearch.Text);
+                _mapTrackerPanel.SetColorsMode(_chkColorHighlight.Checked);
+                UpdateMapColoredLocations();
+                _updateMapCounters?.Invoke();
+            };
+            searchInner.Controls.Add(_chkColorHighlight);
 
-            _lblCounter = new Label { Location = new Point(1086, 10), Size = new Size(160, 18), ForeColor = Color.FromArgb(180, 180, 180), TextAlign = ContentAlignment.MiddleLeft };
-            searchPanel.Controls.Add(_lblCounter);
+            _lblCounter = new Label { Location = new Point(1086, 10), Size = new Size(120, 18), ForeColor = Color.FromArgb(180, 180, 180), TextAlign = ContentAlignment.MiddleLeft };
+            searchInner.Controls.Add(_lblCounter);
 
             _tabControl = new TabControl { Dock = DockStyle.Fill };            // Tab: Locations
             var tabLocations = new TabPage("Locations");
@@ -448,10 +409,19 @@ namespace OoTMMTracker.Forms
                 Dock = DockStyle.Fill,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
                 ReadOnly = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                DefaultCellStyle = { SelectionBackColor = Color.FromArgb(60, 80, 100), SelectionForeColor = Color.White }
+                RowHeadersVisible = false,
+                DefaultCellStyle = { SelectionBackColor = Color.FromArgb(45, 45, 45), SelectionForeColor = Color.Empty }
+            };
+            _dgvSongEvents.CellFormatting += (s, e) =>
+            {
+                e.CellStyle.SelectionBackColor = e.CellStyle.BackColor == Color.Empty
+                    ? Color.FromArgb(45, 45, 45)
+                    : e.CellStyle.BackColor;
+                e.CellStyle.SelectionForeColor = e.CellStyle.ForeColor;
             };
             _dgvSongEvents.Columns.Add("Location", "Location");
             _dgvSongEvents.Columns[0].FillWeight = 60;
@@ -474,13 +444,311 @@ namespace OoTMMTracker.Forms
             };
             tabSongEvents.Controls.Add(_dgvSongEvents);
             _tabControl.TabPages.Add(tabSongEvents);
-            
+
+            // Tab: Map
+            var tabMap = new TabPage("Map");
+            _mapTrackerPanel = new Controls.MapTrackerPanel { Dock = DockStyle.Fill };
+            _mapTrackerPanel.MarkCompleted += (locationNames, game) =>
+            {
+                foreach (var loc in locationNames)
+                {
+                    var key = $"{game}|{loc}";
+                    _foundLocations.Add(key);
+                    // Check the corresponding row in the locations grid
+                    foreach (DataGridViewRow row in _dgvLocations.Rows)
+                    {
+                        if (row.Cells["Game"]?.Value?.ToString() == game &&
+                            row.Cells["Location"]?.Value?.ToString() == loc)
+                        {
+                            row.Cells[0].Value = true;
+                            ApplyRowColor(row, true);
+                        }
+                    }
+                }
+                _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+                _updateMapCounters?.Invoke();
+                // Update counter
+                int total    = _dgvLocations.Rows.Count;
+                int checked_ = _dgvLocations.Rows.Cast<DataGridViewRow>().Count(r => r.Cells[0].Value is true);
+                if (_lblCounter != null)
+                    _lblCounter.Text = $"{checked_}/{total} checked";
+            };
+
+            var mapFilterPanel = new Panel { Dock = DockStyle.Top, Height = 48, BackColor = Color.FromArgb(45, 45, 45) };
+            var mapFilterInner = new Panel
+            {
+                Location  = new Point(0, 0),
+                Height    = 32,
+                Width     = 970,
+                BackColor = Color.FromArgb(45, 45, 45)
+            };
+            var mapFilterHScroll = new HScrollBar
+            {
+                Dock        = DockStyle.Bottom,
+                Height      = 16,
+                Minimum     = 0,
+                Maximum     = 760,
+                SmallChange = 20,
+                LargeChange = 200,
+            };
+            mapFilterHScroll.Scroll += (s, e) =>
+            {
+                mapFilterInner.Location = new Point(-mapFilterHScroll.Value, 0);
+            };
+            mapFilterPanel.Controls.Add(mapFilterInner);
+            mapFilterPanel.Controls.Add(mapFilterHScroll);
+            mapFilterPanel.Resize += (s, e) =>
+            {
+                int overflow = mapFilterInner.Width - mapFilterPanel.Width;
+                mapFilterHScroll.Visible = overflow > 0;
+                mapFilterPanel.Height = mapFilterHScroll.Visible ? 48 : 32;
+                if (overflow > 0)
+                {
+                    mapFilterHScroll.Maximum = overflow + mapFilterHScroll.LargeChange;
+                    mapFilterHScroll.Value = Math.Min(mapFilterHScroll.Value, overflow);
+                    mapFilterInner.Location = new Point(-mapFilterHScroll.Value, 0);
+                }
+                else
+                {
+                    mapFilterInner.Location = new Point(0, 0);
+                }
+            };
+            mapFilterInner.Controls.Add(new Label { Text = "Game:", Location = new Point(6, 8), Size = new Size(42, 18), ForeColor = Color.White });
+
+            _cmbMapGame = new ComboBox
+            {
+                Location = new Point(50, 5), Size = new Size(80, 22),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _cmbMapGame.Items.AddRange(new object[] { "All", "OoT", "MM" });
+            _cmbMapGame.SelectedIndex = 0;
+            mapFilterInner.Controls.Add(_cmbMapGame);
+            var cmbMapGame = _cmbMapGame;
+
+            mapFilterInner.Controls.Add(new Label { Text = "Region:", Location = new Point(138, 8), Size = new Size(52, 18), ForeColor = Color.White });
+
+            _cmbMapRegion = new ComboBox
+            {
+                Location = new Point(192, 5), Size = new Size(200, 22),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _cmbMapRegion.Items.Add("— Select —");
+            foreach (var r in Services.MapRegionsData.GetAll())
+                _cmbMapRegion.Items.Add(r);
+            _cmbMapRegion.SelectedIndex = 0;
+
+            // Rebuild region list filtered by game
+            void RebuildMapRegionList()
+            {
+                var selected = _cmbMapRegion.SelectedItem as Models.MapRegion;
+                _cmbMapRegion.Items.Clear();
+                _cmbMapRegion.Items.Add("— Select —");
+                var gameFilter = cmbMapGame.SelectedItem?.ToString() ?? "All";
+                foreach (var r in Services.MapRegionsData.GetAll())
+                {
+                    if (gameFilter == "All" || r.Game == gameFilter.ToUpper())
+                        _cmbMapRegion.Items.Add(r);
+                }
+                if (selected != null && _cmbMapRegion.Items.Contains(selected))
+                    _cmbMapRegion.SelectedItem = selected;
+                else
+                    _cmbMapRegion.SelectedIndex = 0;
+            }
+
+            cmbMapGame.SelectedIndexChanged += (s, e) => RebuildMapRegionList();
+
+            mapFilterInner.Controls.Add(_cmbMapRegion);
+            mapFilterInner.Controls.Add(new Label { Text = "Sub-map:", Location = new Point(400, 8), Size = new Size(58, 18), ForeColor = Color.White });
+            _cmbMapSub = new ComboBox
+            {
+                Location = new Point(460, 5), Size = new Size(200, 22),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Enabled = false
+            };
+            var cmbMapRegion = _cmbMapRegion;
+            var cmbMapSub    = _cmbMapSub;
+
+            // Counters: region total and sub-region
+            var lblMapRegionCounter = new Label
+            {
+                Location = new Point(760, 8), Size = new Size(100, 18),
+                ForeColor = Color.FromArgb(180, 180, 180), Text = ""
+            };
+            var lblMapSubCounter = new Label
+            {
+                Location = new Point(864, 8), Size = new Size(100, 18),
+                ForeColor = Color.FromArgb(180, 180, 180), Text = ""
+            };
+
+            // Helper: count found/total for a set of location names (excluding consumables/traps when Colors is on)
+            int CountFound(System.Collections.Generic.IEnumerable<string> locationNames, string game)
+            {
+                int found = 0;
+                foreach (var loc in locationNames)
+                {
+                    if (_chkColorHighlight.Checked && _coloredLocations.Contains($"{game}|{loc}"))
+                        continue;
+                    if (_foundLocations.Contains($"{game}|{loc}"))
+                        found++;
+                }
+                return found;
+            }
+
+            int CountTotal(System.Collections.Generic.IEnumerable<string> locationNames, string game)
+            {
+                int total = 0;
+                foreach (var loc in locationNames)
+                {
+                    if (_chkColorHighlight.Checked && _coloredLocations.Contains($"{game}|{loc}"))
+                        continue;
+                    if (_knownLocations.Contains($"{game}|{loc}"))
+                        total++;
+                }
+                return total;
+            }
+
+            void UpdateMapCounters()
+            {
+                if (_spoilerLog == null)
+                {
+                    lblMapRegionCounter.Text = "";
+                    lblMapSubCounter.Text    = "";
+                    return;
+                }
+                if (cmbMapRegion.SelectedItem is Models.MapRegion region)
+                {
+                    var game = region.Game;
+                    var allLocs = region.SubRegions
+                        .SelectMany(s => s.Marks)
+                        .SelectMany(m => m.LocationNames)
+                        .Distinct()
+                        .ToList();
+                    int total = CountTotal(allLocs, game);
+                    int found = CountFound(allLocs, game);
+                    lblMapRegionCounter.Text = $"Region: {found}/{total}";
+
+                    if (cmbMapSub.SelectedItem is Models.MapSubRegion sub)
+                    {
+                        var subLocs = sub.Marks.SelectMany(m => m.LocationNames).Distinct().ToList();
+                        int subTotal = CountTotal(subLocs, game);
+                        int subFound = CountFound(subLocs, game);
+                        lblMapSubCounter.Text = $"Sub: {subFound}/{subTotal}";
+                    }
+                    else
+                    {
+                        lblMapSubCounter.Text = "";
+                    }
+                }
+                else
+                {
+                    lblMapRegionCounter.Text = "";
+                    lblMapSubCounter.Text = "";
+                }
+            }
+
+            cmbMapRegion.SelectedIndexChanged += (s, e) =>
+            {
+                cmbMapSub.Items.Clear();
+                cmbMapSub.Enabled = false;
+                _mapTrackerPanel.SetSubRegion(null, _foundLocations);
+
+                if (cmbMapRegion.SelectedItem is Models.MapRegion region)
+                {
+                    foreach (var sub in region.SubRegions)
+                    {
+                        // Filter sub-maps by required setting
+                        if (sub.RequiredSettingKey != null)
+                        {
+                            if (_spoilerLog == null) continue;
+                            // Check both Settings and WorldFlags
+                            string? val = null;
+                            if (!_spoilerLog.Settings.TryGetValue(sub.RequiredSettingKey, out val))
+                                _spoilerLog.WorldFlags.TryGetValue(sub.RequiredSettingKey, out val);
+                            if (val == null) continue;
+                            // Check: exact match OR contains in pipe-separated list
+                            bool matches = string.Equals(val, sub.RequiredSettingValue, StringComparison.OrdinalIgnoreCase);
+                            if (!matches && sub.RequiredSettingContains != null)
+                            {
+                                var parts = val.Split('|');
+                                matches = parts.Any(p => string.Equals(p.Trim(), sub.RequiredSettingContains, StringComparison.OrdinalIgnoreCase));
+                            }
+                            if (!matches) continue;
+                        }
+                        cmbMapSub.Items.Add(sub);
+                    }
+                    if (cmbMapSub.Items.Count > 0)
+                    {
+                        cmbMapSub.Enabled = true;
+                        cmbMapSub.SelectedIndex = 0;
+                    }
+                }
+                UpdateMapCounters();
+            };
+
+            cmbMapSub.SelectedIndexChanged += (s, e) =>
+            {
+                var sub = cmbMapSub.SelectedItem as Models.MapSubRegion;
+                var game = (cmbMapRegion.SelectedItem as Models.MapRegion)?.Game ?? "OOT";
+                _mapTrackerPanel.SetSubRegion(sub, _foundLocations, game);
+                UpdateMapCounters();
+            };
+
+            // Hook into location changes to refresh counters
+            _dgvLocations.CellValueChanged += (s, e) => UpdateMapCounters();
+            _updateMapCounters = UpdateMapCounters;
+
+            mapFilterInner.Controls.Add(cmbMapSub);
+            mapFilterInner.Controls.Add(lblMapRegionCounter);
+            mapFilterInner.Controls.Add(lblMapSubCounter);
+
+            // Age/state filter — OoT: child/adult, MM: cursed/cleared
+            var chkAdult = new CheckBox
+            {
+                Text      = "Adult",
+                Location  = new Point(668, 7),
+                Size      = new Size(85, 18),
+                ForeColor = Color.White,
+                Checked   = false,
+                Visible   = false
+            };
+            chkAdult.CheckedChanged += (s, e) =>
+            {
+                bool isMm = cmbMapRegion.SelectedItem is Models.MapRegion rm && rm.Game == "MM";
+                _mapTrackerPanel.SetAgeFilter(chkAdult.Checked ? (isMm ? "cleared" : "adult") : (isMm ? "cursed" : "child"));
+            };
+            // Show filter only for OoT or MM regions, update label accordingly
+            cmbMapRegion.SelectedIndexChanged += (s2, e2) =>
+            {
+                if (cmbMapRegion.SelectedItem is Models.MapRegion r)
+                {
+                    chkAdult.Visible = true;
+                    if (r.Game == "MM")
+                    {
+                        chkAdult.Text = "Cleared";
+                        _mapTrackerPanel.SetAgeFilter(chkAdult.Checked ? "cleared" : "cursed");
+                    }
+                    else
+                    {
+                        chkAdult.Text = "Adult";
+                        _mapTrackerPanel.SetAgeFilter(chkAdult.Checked ? "adult" : "child");
+                    }
+                }
+                else
+                {
+                    chkAdult.Visible = false;
+                    chkAdult.Checked = false;
+                    _mapTrackerPanel.SetAgeFilter("both");
+                }
+            };
+            mapFilterInner.Controls.Add(chkAdult);
+            tabMap.Controls.Add(_mapTrackerPanel);
+            tabMap.Controls.Add(mapFilterPanel);
+            _tabControl.TabPages.Add(tabMap);
+
             // Add tabControl to rightContainer (Fill — first!)
             rightContainer.Controls.Add(_tabControl);
             // searchPanel (Top)
             rightContainer.Controls.Add(searchPanel);
-            // Placeholder — added last, will be topmost
-            rightContainer.Controls.Add(new Label { Dock = DockStyle.Top, Height = 64, Text = "", BackColor = Color.FromArgb(45, 45, 45) });            
             // Drag & Drop
             this.AllowDrop = true;
             this.DragEnter += MainForm_DragEnter;
@@ -490,17 +758,40 @@ namespace OoTMMTracker.Forms
             this.KeyDown += MainForm_KeyDown;
             // Update broadcast when any item changes
             ItemTrackerPanel.ItemChanged += () => UpdateBroadcast();
+            // Unsubscribe on form close to prevent memory leaks
+            this.FormClosed += (s, e) =>
+            {
+                ItemTrackerPanel.ItemChanged -= () => UpdateBroadcast();
+                foreach (var panel in _trackerPanels)
+                    panel.Dispose();
+                _trackerToolTip.Dispose();
+            };
         }
         
-        private static DataGridView MakeGrid() => new()
+        private static DataGridView MakeGrid()
         {
-            Dock = DockStyle.Fill,
-            AllowUserToAddRows = false,
-            AllowUserToDeleteRows = false,
-            ReadOnly = true,
-            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-            SelectionMode = DataGridViewSelectionMode.FullRowSelect
-        };
+            var dgv = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                ReadOnly = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false,
+                EnableHeadersVisualStyles = false,
+            };
+            // Remove selection highlight — match selection color to row background
+            dgv.CellFormatting += (s, e) =>
+            {
+                e.CellStyle.SelectionBackColor = e.CellStyle.BackColor == Color.Empty
+                    ? Color.FromArgb(45, 45, 45)
+                    : e.CellStyle.BackColor;
+                e.CellStyle.SelectionForeColor = e.CellStyle.ForeColor;
+            };
+            return dgv;
+        }
         // ── Tracker ──────────────────────────────────────────────────────────────
         
         private readonly List<ItemTrackerPanel> _trackerPanels = new();
@@ -516,6 +807,9 @@ namespace OoTMMTracker.Forms
                     panel.SaveProgress(progress);
             }
             
+            // Dispose old panels to release event handlers and resources
+            foreach (var panel in _trackerPanels)
+                panel.Dispose();
             _trackerPanels.Clear();
             _trackerScrollPanel.Controls.Clear();
             ItemTrackerPanel.ClearGlobal();
@@ -811,6 +1105,57 @@ namespace OoTMMTracker.Forms
             }
         }
         
+        private void BtnResetAll_Click(object? sender, EventArgs e)
+        {
+            if (MessageBox.Show("Reset everything?\n(Log, tracker progress, settings and locations will be cleared)", "Confirm",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            BtnResetLog_Click(sender, e);
+            if (_spoilerLog == null) // log was cleared
+            {
+                foreach (var p in _trackerPanels) p.ResetAll();
+                _currentTrackerConfig = new TrackerConfig();
+                SaveTrackerSettings();
+                RebuildTracker();
+                _foundLocations.Clear();
+                _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+                _updateMapCounters?.Invoke();
+                if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
+                UpdateLocationsList(_txtSearch.Text);
+            }
+        }
+
+        private void BtnResetLog_Click(object? sender, EventArgs e)
+        {
+            if (MessageBox.Show("Unload the spoiler log?\n(All progress and locations will be cleared)", "Confirm",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            _spoilerLog = null;
+            _currentSpoilerLogPath = null;
+            _lblInfo.Text = "No file loaded";
+            _foundLocations.Clear();
+            _songEvents.Clear();
+            _mapTrackerPanel.SetKnownLocations(new HashSet<string>());
+            _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+            // Reset map region selection — clears map and counters
+            if (_cmbMapRegion != null) _cmbMapRegion.SelectedIndex = 0;
+            if (_cmbMapSub    != null) { _cmbMapSub.Items.Clear(); _cmbMapSub.Enabled = false; }
+            if (_cmbMapGame   != null) { _cmbMapGame.Items.Clear(); _cmbMapGame.Items.AddRange(new object[] { "All", "OoT", "MM" }); _cmbMapGame.SelectedIndex = 0; }
+            _dgvLocations.Rows.Clear();
+            _dgvSettings.Rows.Clear();
+            _lstTricks.Items.Clear();
+            _dgvStartingItems.Rows.Clear();
+            _dgvWorldFlags.Rows.Clear();
+            _dgvSpecialConditions.Rows.Clear();
+            _dgvEntrances.Rows.Clear();
+            _dgvSongEvents.Rows.Clear();
+            _cmbGameFilter.Enabled = false;
+            _cmbGameFilter.SelectedIndex = 0;
+            _cmbRegionFilter.Items.Clear();
+            _cmbRegionFilter.Items.Add("All Regions");
+            _cmbRegionFilter.SelectedIndex = 0;
+            if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
+            _lblCounter.Text = "";
+        }
+
         private void BtnResetTracker_Click(object? sender, EventArgs e)
         {
             if (MessageBox.Show("Reset all tracker progress and settings?", "Confirm",
@@ -823,6 +1168,8 @@ namespace OoTMMTracker.Forms
             RebuildTracker();
             // Reset found locations
             _foundLocations.Clear();
+            _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+            _updateMapCounters?.Invoke();
             if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
             UpdateLocationsList(_txtSearch.Text);
         }
@@ -838,6 +1185,8 @@ namespace OoTMMTracker.Forms
                 ApplyStartingItems();
             // Reset found locations
             _foundLocations.Clear();
+            _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+            _updateMapCounters?.Invoke();
             if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
             UpdateLocationsList(_txtSearch.Text);
         }
@@ -927,6 +1276,10 @@ namespace OoTMMTracker.Forms
                 if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
                 UpdateLocationsList(_txtSearch.Text);
 
+                // Update map marks and counters
+                _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+                _updateMapCounters?.Invoke();
+
                 // Re-apply starting items (they should be locked)
                 if (_spoilerLog != null)
                     ApplyStartingItems();
@@ -955,15 +1308,45 @@ namespace OoTMMTracker.Forms
         
         private void MainForm_KeyDown(object? sender, KeyEventArgs e)
         {
+            if (e.Shift)
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.Oemplus:
+                    case Keys.Add:
+                    {
+                        var steps = ItemTrackerPanel.GetItemSizeSteps();
+                        int cur = Array.IndexOf(steps, ItemTrackerPanel.GetItemSize());
+                        if (cur < steps.Length - 1) { ItemTrackerPanel.SetItemSize(steps[cur + 1]); RebuildTracker(); }
+                        e.Handled = true; break;
+                    }
+                    case Keys.OemMinus:
+                    case Keys.Subtract:
+                    {
+                        var steps = ItemTrackerPanel.GetItemSizeSteps();
+                        int cur = Array.IndexOf(steps, ItemTrackerPanel.GetItemSize());
+                        if (cur > 0) { ItemTrackerPanel.SetItemSize(steps[cur - 1]); RebuildTracker(); }
+                        e.Handled = true; break;
+                    }
+                    case Keys.D0:
+                    case Keys.NumPad0:
+                        ItemTrackerPanel.SetItemSize(48); RebuildTracker();
+                        e.Handled = true; break;
+                }
+                return;
+            }
+
             switch (e.KeyCode)
             {
                 case Keys.F1: BtnLoadFile_Click(this, EventArgs.Empty); break;
                 case Keys.F2: BtnSave_Click(this, EventArgs.Empty); break;
                 case Keys.F3: BtnTrackerOptions_Click(this, EventArgs.Empty); break;
                 case Keys.F4: BtnLoad_Click(this, EventArgs.Empty); break;
-                case Keys.F5: BtnResetProgress_Click(this, EventArgs.Empty); break;
-                case Keys.F6: BtnResetTracker_Click(this, EventArgs.Empty); break;
-                case Keys.F7:
+                case Keys.F5: BtnResetAll_Click(this, EventArgs.Empty); break;
+                case Keys.F6: BtnResetLog_Click(this, EventArgs.Empty); break;
+                case Keys.F7: BtnResetTracker_Click(this, EventArgs.Empty); break;
+                case Keys.F8: BtnResetProgress_Click(this, EventArgs.Empty); break;
+                case Keys.F9:
                     if (_broadcastForm == null || _broadcastForm.IsDisposed)
                     {
                         _broadcastForm = new BroadcastForm();
@@ -972,10 +1355,7 @@ namespace OoTMMTracker.Forms
                         _broadcastForm.Show(this);
                         UpdateBroadcast();
                     }
-                    else
-                    {
-                        _broadcastForm.Focus();
-                    }
+                    else _broadcastForm.Focus();
                     break;
             }
         }
@@ -1036,11 +1416,32 @@ namespace OoTMMTracker.Forms
                 PopulateSongEvents();
 
                 // Reset progress — new log, new game
+                _foundLocations.Clear();
                 RebuildTracker(resetProgress: true);
                 // Apply bottles from log locations
                 ApplyBottlesFromLog();
                 // Apply starting items
                 ApplyStartingItems();
+
+                // Update map with known locations from log
+                var knownLocs = new HashSet<string>(
+                    _spoilerLog.Locations.Values.Select(l => $"{l.Game}|{l.Location}"));
+                _knownLocations = knownLocs;
+                _mapTrackerPanel.SetKnownLocations(knownLocs);
+                _mapTrackerPanel.SetSpoilerLog(_spoilerLog);
+                _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+                UpdateMapColoredLocations();
+                _updateMapCounters?.Invoke();
+
+                // Restrict map game filter based on loaded game mode
+                _cmbMapGame.Items.Clear();
+                if (_currentTrackerConfig.HasOot && _currentTrackerConfig.HasMm)
+                    _cmbMapGame.Items.AddRange(new object[] { "All", "OoT", "MM" });
+                else if (_currentTrackerConfig.HasOot)
+                    _cmbMapGame.Items.AddRange(new object[] { "OoT" });
+                else
+                    _cmbMapGame.Items.AddRange(new object[] { "MM" });
+                _cmbMapGame.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -1050,60 +1451,53 @@ namespace OoTMMTracker.Forms
         
         private void UpdateLocationsList(string? searchText = null)
         {
+            _dgvLocations.SuspendLayout();
             _dgvLocations.Rows.Clear();
             
             if (_spoilerLog == null)
+            {
+                _dgvLocations.ResumeLayout();
                 return;
-            
-            var locations = _spoilerLog.Locations.Values.AsEnumerable();
-            
-            // Filter by search
-            if (!string.IsNullOrWhiteSpace(searchText))
-            {
-                searchText = searchText.ToLower();
-                locations = locations.Where(l => 
-                    l.Location.ToLower().Contains(searchText) || 
-                    l.Item.ToLower().Contains(searchText));
             }
-            
-            // Filter by game
-            if (_cmbGameFilter.SelectedIndex > 0)
-            {
-                var selectedGame = _cmbGameFilter.SelectedItem?.ToString();
-                if (!string.IsNullOrEmpty(selectedGame))
-                {
-                    // Game in log is "OOT" or "MM", but combo shows "OoT" or "MM"
-                    var gameToMatch = selectedGame == "OoT" ? "OOT" : selectedGame;
-                    locations = locations.Where(l => l.Game == gameToMatch);
-                }
-            }
-            
-            // Filter by regions
-            if (_cmbRegionFilter.SelectedIndex > 0)
-            {
-                var selectedRegion = _cmbRegionFilter.SelectedItem?.ToString();
-                if (!string.IsNullOrEmpty(selectedRegion))
-                {
-                    locations = locations.Where(l => l.Region == selectedRegion);
-                }
-            }
-            
-            foreach (var location in locations.OrderBy(l => l.Region).ThenBy(l => l.Location))
+
+            // Pre-compute filter values once
+            string? search = string.IsNullOrWhiteSpace(searchText) ? null : searchText.ToLower();
+            string? gameFilter = _cmbGameFilter.SelectedIndex > 0
+                ? (_cmbGameFilter.SelectedItem?.ToString() == "OoT" ? "OOT" : _cmbGameFilter.SelectedItem?.ToString())
+                : null;
+            string? regionFilter = _cmbRegionFilter.SelectedIndex > 0
+                ? _cmbRegionFilter.SelectedItem?.ToString()
+                : null;
+            int statusFilter = _cmbFoundFilter?.SelectedIndex ?? 0;
+
+            // Single-pass filter + sort
+            var filtered = _spoilerLog.Locations.Values
+                .Where(l =>
+                    (search == null || l.Location.ToLower().Contains(search) || l.Item.ToLower().Contains(search)) &&
+                    (gameFilter == null || l.Game == gameFilter) &&
+                    (regionFilter == null || l.Region == regionFilter))
+                .OrderBy(l => l.Region)
+                .ThenBy(l => l.Location);
+
+            // Batch add rows
+            _dgvLocations.SuspendLayout();
+            foreach (var location in filtered)
             {
                 var key = $"{location.Game}|{location.Location}";
                 bool found = _foundLocations.Contains(key);
-                // Filter by status
-                int statusFilter = _cmbFoundFilter?.SelectedIndex ?? 0;
-                if (statusFilter == 1 && found)  continue; // only not found
-                if (statusFilter == 2 && !found) continue; // only found
+                if (statusFilter == 1 && found)  continue;
+                if (statusFilter == 2 && !found) continue;
                 _dgvLocations.Rows.Add(found, location.Game, location.Region, location.Location, location.Item);
             }
+            _dgvLocations.ResumeLayout();
 
             // Update counter
-            int total   = _dgvLocations.Rows.Count;
+            int total    = _dgvLocations.Rows.Count;
             int checked_ = _dgvLocations.Rows.Cast<DataGridViewRow>().Count(r => r.Cells[0].Value is true);
             if (_lblCounter != null)
                 _lblCounter.Text = $"{checked_}/{total} checked";
+
+            _dgvLocations.ResumeLayout();
         }
 
         private static string LocationKey(DataGridViewRow row)
@@ -1128,6 +1522,8 @@ namespace OoTMMTracker.Forms
                 _foundLocations.Remove(key);
             // Recolor the row
             ApplyRowColor(row, isChecked);
+            // Update map marks
+            _mapTrackerPanel?.UpdateFoundLocations(_foundLocations);
             // Update counter
             int total    = _dgvLocations.Rows.Count;
             int checked_ = _dgvLocations.Rows.Cast<DataGridViewRow>().Count(r => r.Cells[0].Value is true);
@@ -1231,10 +1627,25 @@ namespace OoTMMTracker.Forms
                 lower.StartsWith("milk refill") || lower.StartsWith("lon lon milk"))
                 return true;
 
+            // Milk (not bottled)
+            if (lower.StartsWith("lon lon milk") || lower == "romani milk")
+                return true;
+
             // Nothing
             if (lower == "nothing") return true;
 
             return false;
+        }
+
+        private void UpdateMapColoredLocations()
+        {
+            if (_spoilerLog == null) return;
+            var colored = new HashSet<string>();
+            foreach (var loc in _spoilerLog.Locations.Values)
+                if (IsTrap(loc.Item) || IsConsumable(loc.Item))
+                    colored.Add($"{loc.Game}|{loc.Location}");
+            _coloredLocations = colored;
+            _mapTrackerPanel.SetColoredLocations(colored);
         }
 
         private static void ApplyRowColor(DataGridViewRow row, bool found)
@@ -1411,6 +1822,9 @@ namespace OoTMMTracker.Forms
         {
             _dgvSongEvents.Rows.Clear();
 
+            // Song Events are OoT-only — skip if MM-only game
+            if (!_currentTrackerConfig.HasOot) return;
+
             foreach (var kv in SongEventDefaults)
             {
                 // If shuffle enabled — use saved value or "?", otherwise use vanilla
@@ -1456,5 +1870,24 @@ namespace OoTMMTracker.Forms
         public string BombchuBehaviorMm  { get; set; } = "toggle";
         public List<string> FoundLocations { get; set; } = new();
         public Dictionary<string, string> SongEvents { get; set; } = new();
+    }
+
+
+    /// <summary>Dark color table for MenuStrip.</summary>
+    internal class DarkMenuColorTable : ProfessionalColorTable
+    {
+        public override Color MenuItemSelected          => Color.FromArgb(60, 60, 80);
+        public override Color MenuItemBorder            => Color.FromArgb(80, 80, 100);
+        public override Color MenuBorder                => Color.FromArgb(60, 60, 60);
+        public override Color MenuItemSelectedGradientBegin => Color.FromArgb(60, 60, 80);
+        public override Color MenuItemSelectedGradientEnd   => Color.FromArgb(60, 60, 80);
+        public override Color MenuItemPressedGradientBegin  => Color.FromArgb(50, 50, 70);
+        public override Color MenuItemPressedGradientEnd    => Color.FromArgb(50, 50, 70);
+        public override Color ToolStripDropDownBackground   => Color.FromArgb(40, 40, 40);
+        public override Color ImageMarginGradientBegin      => Color.FromArgb(40, 40, 40);
+        public override Color ImageMarginGradientMiddle     => Color.FromArgb(40, 40, 40);
+        public override Color ImageMarginGradientEnd        => Color.FromArgb(40, 40, 40);
+        public override Color SeparatorDark                 => Color.FromArgb(70, 70, 70);
+        public override Color SeparatorLight                => Color.FromArgb(70, 70, 70);
     }
 }
