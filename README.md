@@ -40,7 +40,7 @@ A tracker application for OoTMM (Ocarina of Time + Majora's Mask) randomizer.
 1. Install [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) or higher
 2. Clone the repository:
    ```bash
-   git clone https://github.com/Memych/OoTMMTracker.git
+   git clone https://github.com/YOUR_USERNAME/OoTMMTracker.git
    cd OoTMMTracker
    ```
 3. Build the project:
@@ -92,9 +92,15 @@ Item icons are sourced from multiple projects:
 
 All icons are used under fair use for non-commercial fan project purposes.
 
+### Map Assets
+Map images and stamps are sourced from:
+
+- **[OoTMM Combo Tracker by Loupimo](https://github.com/Loupimo/OoTMMCombo-Tracker)** — Comprehensive map images and region stamps for OoTMM randomizer tracking
+
 ### Special Thanks
 - **ariahks** — For the EmoTracker OoTMM package and icon resources
 - **OoT Reloaded / MM Reloaded teams** — For the high-resolution game assets
+- **Loupimo** — For the comprehensive map images and stamps from OoTMM Combo Tracker
 - **OoTMM Development Team** — For creating the amazing randomizer
 - **Nintendo** — For the original games and assets
 - **OoT/MM Speedrunning Community** — For inspiration and feedback
