@@ -136,9 +136,52 @@ namespace OoTMMTracker.Forms
                 _resizeTimer.Stop();
                 _resizeTimer.Start();
             };
+
+            this.KeyPreview = true;
+            this.KeyDown += (s, e) =>
+            {
+                if (!e.Shift) return;
+                switch (e.KeyCode)
+                {
+                    case Keys.Oemplus:
+                    case Keys.Add:
+                    {
+                        var steps = ItemTrackerPanel.GetItemSizeSteps();
+                        int cur = Array.IndexOf(steps, _broadcastItemSize);
+                        if (cur < steps.Length - 1) { _broadcastItemSize = steps[cur + 1]; UpdateZoomLabel(); RebuildWithOwnSize(); }
+                        e.Handled = true; break;
+                    }
+                    case Keys.OemMinus:
+                    case Keys.Subtract:
+                    {
+                        var steps = ItemTrackerPanel.GetItemSizeSteps();
+                        int cur = Array.IndexOf(steps, _broadcastItemSize);
+                        if (cur > 0) { _broadcastItemSize = steps[cur - 1]; UpdateZoomLabel(); RebuildWithOwnSize(); }
+                        e.Handled = true; break;
+                    }
+                    case Keys.D0:
+                    case Keys.NumPad0:
+                        _broadcastItemSize = 48; UpdateZoomLabel(); RebuildWithOwnSize();
+                        e.Handled = true; break;
+                }
+            };
         }
 
         private void UpdateZoomLabel() => _lblZoom.Text = $"{_broadcastItemSize}px";
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _resizeTimer?.Stop();
+                _resizeTimer?.Dispose();
+                _resizeTimer = null;
+                foreach (var panel in _panels)
+                    panel.Dispose();
+                _toolTip.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 
         /// Rebuild using broadcast's own item size.
         private void RebuildWithOwnSize()
@@ -157,6 +200,9 @@ namespace OoTMMTracker.Forms
             int mainSize = ItemTrackerPanel.GetItemSize();
             ItemTrackerPanel.SetItemSize(_broadcastItemSize);
 
+            // Dispose old panels to release event handlers and resources
+            foreach (var panel in _panels)
+                panel.Dispose();
             _scrollPanel.Controls.Clear();
             _panels.Clear();
             ItemTrackerPanel.ClearGlobal();
