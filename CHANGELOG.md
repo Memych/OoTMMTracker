@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.2.0
+
+### New Features
+- Added comprehensive map support for all regions
+- Enhanced map visualization with detailed region boundaries
+- New map tracking panel for better navigation
+
+### Improvements
+- Application window size and layout optimizations
+- Improved window resizing behavior across all forms
+- Better handling of different screen resolutions
+- Enhanced UI responsiveness during window operations
+- Updated default window positions and sizes for better user experience
+
+### Bug Fixes
+- Fixed window size persistence issues
+- Resolved layout problems when resizing application windows
+- Fixed map display issues in various regions
+- Corrected window positioning on multi-monitor setups
+- Addressed minor UI glitches in tracker panels
+
+### Credits
+- Added attribution for **OoTMM Combo Tracker by Loupimo** as source for map images and region stamps
+
 ## v1.1.1
 
 ### Improvements
