@@ -293,30 +293,43 @@ namespace OoTMMTracker.Controls
             if (label != null)
             {
                 bool isMax = item.CurrentCount >= item.MaxCount && item.MaxCount > 0;
-
-                // Adaptive font: reduce if label is long
-                float fontSize = label.Length > 10 ? 4.5f : label.Length > 7 ? 5.5f : label.Length > 4 ? 6.5f : 7f;
+                float baseSize = rect.Width / 6f;
+                float fontSize = label.Length > 10 ? baseSize * 0.65f
+                               : label.Length > 7  ? baseSize * 0.80f
+                               : label.Length > 4  ? baseSize * 0.95f
+                               : baseSize;
+                fontSize = Math.Max(fontSize, 4f);
                 using var font = new Font("Arial", fontSize, FontStyle.Bold);
                 var sz = g.MeasureString(label, font);
-                float tx = (rect.Width - sz.Width) / 2f;
-                float ty = rect.Height - sz.Height;
+                // If still too wide, shrink further
+                if (sz.Width > rect.Width - 2)
+                {
+                    float scale = (rect.Width - 2f) / sz.Width;
+                    fontSize = Math.Max(fontSize * scale, 4f);
+                }
+                using var font2 = new Font("Arial", fontSize, FontStyle.Bold);
+                var sz2 = g.MeasureString(label, font2);
+                float tx = (rect.Width - sz2.Width) / 2f;
+                float ty = rect.Height - sz2.Height;
 
                 using var shadow = new SolidBrush(Color.Black);
-                g.DrawString(label, font, shadow, tx + 1, ty + 1);
+                g.DrawString(label, font2, shadow, tx + 1, ty + 1);
 
                 // At max — draw label in green, otherwise white
                 using var textBrush = new SolidBrush(isMax ? Color.FromArgb(100, 220, 100) : Color.White);
-                g.DrawString(label, font, textBrush, tx, ty);
+                g.DrawString(label, font2, textBrush, tx, ty);
             }
 
             // For Letter/Gold Dust bottle used (CurrentCount == 2) — draw checkmark
             if (item.IsBottle && item.CurrentCount == 2)
             {
-                using var checkFont = new Font("Arial", 9f, FontStyle.Bold);
+                float checkSize = Math.Max(rect.Width / 4f, 7f);
+                using var checkFont = new Font("Arial", checkSize, FontStyle.Bold);
                 using var shadow = new SolidBrush(Color.Black);
                 using var green  = new SolidBrush(Color.FromArgb(100, 220, 100));
-                g.DrawString("✓", checkFont, shadow, rect.Width - 11, 1);
-                g.DrawString("✓", checkFont, green,  rect.Width - 12, 0);
+                float cx = rect.Width - checkSize - 1;
+                g.DrawString("✓", checkFont, shadow, cx + 1, 1);
+                g.DrawString("✓", checkFont, green,  cx,     0);
             }
 
             // Border
@@ -491,18 +504,23 @@ namespace OoTMMTracker.Controls
             int score = 0;
 
             // ── Dungeons (stones/medallions/remains) ──────────────────────────────
-            // AllRewardIcons indices: 1-3=stones, 4-9=medallions, 10-13=remains
             if (cond.Stones || cond.Medallions || cond.Remains)
             {
                 // Standard mode: dungeon blocks with reward selection
+                // Use reward name to classify (works regardless of game mode / icon array size)
+                static bool IsStone(string name)     => name is "Kokiri's Emerald" or "Goron's Ruby" or "Zora's Sapphire";
+                static bool IsMedallion(string name) => name.Contains("Medallion");
+                static bool IsRemains(string name)   => name.Contains("Remains");
+
                 foreach (var kv in _globalItems)
                 {
                     var item = kv.Value;
                     if (!item.IsDungeonReward || !item.DungeonCleared || item.RewardIndex == 0) continue;
-                    bool isStone     = item.RewardIndex >= 1 && item.RewardIndex <= 3;
-                    bool isMedallion = item.RewardIndex >= 4 && item.RewardIndex <= 9;
-                    bool isRemains   = item.RewardIndex >= 10 && item.RewardIndex <= 13;
-                    if ((cond.Stones && isStone) || (cond.Medallions && isMedallion) || (cond.Remains && isRemains))
+                    if (item.RewardNames == null || item.RewardIndex >= item.RewardNames.Length) continue;
+                    var rewardName = item.RewardNames[item.RewardIndex];
+                    if ((cond.Stones     && IsStone(rewardName))     ||
+                        (cond.Medallions && IsMedallion(rewardName)) ||
+                        (cond.Remains    && IsRemains(rewardName)))
                         score++;
                 }
                 // Rewards anywhere mode: standalone reward items
@@ -690,6 +708,24 @@ namespace OoTMMTracker.Controls
             _                         => Color.FromArgb(60, 60, 60)
         };
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Unsubscribe event handlers from all PictureBoxes to prevent memory leaks
+                foreach (Control c in this.Controls)
+                {
+                    if (c is PictureBox pb)
+                    {
+                        pb.Paint     -= ItemBox_Paint;
+                        pb.MouseDown -= ItemBox_MouseDown;
+                        pb.Image      = null;
+                    }
+                }
+            }
+            base.Dispose(disposing);
+        }
+
         public void LockStartingItems(Dictionary<string, int> startingProgress)
         {
             foreach (var item in _items)
@@ -767,12 +803,13 @@ namespace OoTMMTracker.Controls
                         item.CurrentCount = Math.Min(val, item.MaxCount);
                 }
             }
+            // Batch all redraws at once
+            this.SuspendLayout();
             foreach (Control c in this.Controls)
                 if (c is PictureBox pb && pb.Tag is TrackerItem item2)
-                {
                     RefreshIcon(pb, item2);
-                    pb.Invalidate();
-                }
+            this.ResumeLayout(false);
+            this.Invalidate(true);
             if (!IsBroadcast)
                 SyncGanonBk();
         }
