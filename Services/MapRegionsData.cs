@@ -2542,6 +2542,7 @@ namespace OoTMMTracker.Services
                         M("NPC.png", 390, 295, 40, "MM Initial Song of Healing", "Initial Song of Healing"),
                         M("Collectible.png", 329, 204, 40, "MM Clock Town Platform HP", "Clock Town Platform HP"),
                         M("Collectible.png", 630, 544, 40, "MM Clock Town Post Box", "Clock Town Post Box"),
+						M("Collectible.png", 317, 154, 40, "MM Clock Town Post Box", "Clock Town Post Box"),
                         M("Chest.png", 863, 220, 40, "MM Clock Town South Chest Lower", "Clock Town South Chest Lower"),
                         M("Chest.png", 629, 379, 40, "MM Clock Town South Chest Upper", "Clock Town South Chest Upper"),
                         M("Wonder.png", 287, 109, 24, "MM Clock Town South Wonder Item 1", "Clock Town South Wonder Item 1"),
@@ -2560,6 +2561,7 @@ namespace OoTMMTracker.Services
                         M("NPC.png", 676, 335, 40, "MM Clock Town Keaton HP", "Clock Town Keaton HP"),
 						M("NPC.png", 568, 263, 40, "MM Tingle Map Clock Town", "Tingle Map Clock Town"),
 						M("NPC.png", 568, 303, 40, "MM Tingle Map Woodfall", "Tingle Map Woodfall"),
+						M("Collectible.png", 417, 332, 40, "MM Clock Town Post Box", "Clock Town Post Box"),
                         M("Collectible.png", 600, 379, 40, "MM Clock Town Tree HP", "Clock Town Tree HP"),
                         M("Tree.png", 601, 350, 24, "MM Clock Town North Forked Tree 1", "Clock Town North Forked Tree 1"),
                         M("Tree.png", 373, 151, 24, "MM Clock Town North Forked Tree 2", "Clock Town North Forked Tree 2"),
@@ -2593,6 +2595,8 @@ namespace OoTMMTracker.Services
                     Marks = new List<MapMark>
                     {
                         M("Chest.png", 775, 536, 40, "MM Clock Town Silver Rupee Chest", "Clock Town Silver Rupee Chest"),
+						M("Collectible.png", 574, 313, 40, "MM Clock Town Post Box", "Clock Town Post Box"),
+						M("Collectible.png", 150, 220, 40, "MM Clock Town Post Box", "Clock Town Post Box"),
                         M("NPC.png", 342, 274, 40, "MM Clock Town Postman Hat", "Clock Town Postman Hat"),
                         M("Crate.png", 439, 330, 24, "MM Clock Town East Small Crate 1", "Clock Town East Small Crate 1"),
                         M("Crate.png", 396, 406, 24, "MM Clock Town East Small Crate 2", "Clock Town East Small Crate 2"),
