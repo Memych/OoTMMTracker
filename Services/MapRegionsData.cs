@@ -5674,6 +5674,7 @@ namespace OoTMMTracker.Services
                     Marks = new List<MapMark>
                     {
                         M("Gold_Skulltula.png", 327, 112, 40, "OOT Dodongo Cavern GS Scarecrow", "Dodongo Cavern GS Scarecrow"),
+						M("Gold_Skulltula.png", 438, 541, 40, "OOT Dodongo Cavern GS Side Room", "Dodongo Cavern GS Side Room"),
                         M("Grass.png", 384, 403, 24, "OOT Dodongo Cavern Grass East Corridor Side Room", "Dodongo Cavern Grass East Corridor Side Room"),
                         M("Pot.png", 202, 219, 24, "OOT Dodongo Cavern Pot Right Corridor Pot 1", "Dodongo Cavern Pot Right Corridor Pot 1"),
                         M("Pot.png", 217, 237, 24, "OOT Dodongo Cavern Pot Right Corridor Pot 2", "Dodongo Cavern Pot Right Corridor Pot 2"),
