@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.2.1
+
+### New Features
+- Added comprehensive entrance shuffle support for all regions
+- Entrance markers (ME) now show exits FROM current regions
+- DestinationEntranceIds list entrances TO current regions
+- Right-click on entrance markers jumps to destination maps
+- Quick Jump supports warp songs, owls, and wallmasters as entrances
+
+### Improvements
+- Updated map scales for better visibility and navigation
+- Enhanced InfoForm documentation with detailed entrance shuffle information
+- Added "Entrances" section to documentation
+- Improved map marker placement accuracy
+
+### Bug Fixes
+- Fixed entrance marker connections for all OoT and MM non-dungeon regions
+- Corrected DestinationEntranceIds for proper entrance tracking
+- Resolved map navigation issues between regions
+
 ## v1.2.0
 
 ### New Features
