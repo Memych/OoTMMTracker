@@ -11357,7 +11357,10 @@ namespace OoTMMTracker.Services
                     DestinationEntranceIds = new List<string>
 					{
 						"MM_PIRATE_FORTRESS",
-						"MM_EXTERIOR_DOOR_FROM_SEWERS"
+						"MM_EXTERIOR_DOOR_FROM_SEWERS",
+						"MM_EXTERIOR_GATE_FROM_SEWERS",
+						"MM_PIRATE_FORTRESS_EXTERIOR_FROM_INTERIOR",
+						"MM_PIRATE_FORTRESS_EXTERIOR_LOOKOUT"
 					},
                     Marks = new List<MapMark>
                     {
@@ -11367,14 +11370,21 @@ namespace OoTMMTracker.Services
 						M("Chest.png", 463, 336, 40, "MM Pirate Fortress Entrance Chest 3", "Pirate Fortress Entrance Chest 3"),
 						
 						ME("Entrance.png", 134, 128, "Entrance shuffle (Pirate Fortress Sewers)", "MM_SEWERS_FROM_EXTERIOR_DOOR"),
-						ME("Entrance.png", 727, 178, "Entrance shuffle (Great Bay Coast)", "MM_GREAT_BAY_FROM_PIRATE_FORTRESS")
+						ME("Entrance.png", 727, 178, "Entrance shuffle (Great Bay Coast)", "MM_GREAT_BAY_FROM_PIRATE_FORTRESS"),
+						ME("Entrance.png", 452, 278, "Entrance shuffle (Pirate Fortress Sewers)", "MM_SEWERS_FROM_EXTERIOR_GATE"),
+						ME("Entrance.png", 24, 73, "Entrance shuffle (Pirate Fortress Exterior)", "MM_PIRATE_FORTRESS_INTERIOR"),
+						ME("Entrance.png", 417, 184, "Entrance shuffle (Pirate Fortress Exterior)", "MM_PIRATE_FORTRESS_INTERIOR_FROM_LOOKOUT")
                     }
                 },
 				new MapSubRegion
                 {
                     Name = "Interior",
                     BackgroundImage = "region maps/MM/Fortress/Interior.png",
-                    DestinationEntranceIds = new List<string> { "MM_SEWERS_FROM_EXTERIOR_DOOR" },
+                    DestinationEntranceIds = new List<string>
+					{
+						"MM_SEWERS_FROM_EXTERIOR_DOOR",
+						"MM_SEWERS_FROM_EXTERIOR_GATE"
+					},
                     Marks = new List<MapMark>
                     {
 						M("Barrel.png", 555, 199, 24, "MM Pirate Fortress Interior Barrel Aquarium", "Pirate Fortress Interior Barrel Aquarium"),
@@ -11437,6 +11447,7 @@ namespace OoTMMTracker.Services
 						M("Wonder.png", 725, 42, 24, "MM Pirate Fortress Interior Wonder Item Skull Forehead 2", "Pirate Fortress Interior Wonder Item Skull Forehead 2"),
 						M("Wonder.png", 693, 42, 24, "MM Pirate Fortress Interior Wonder Item Skull Forehead 3", "Pirate Fortress Interior Wonder Item Skull Forehead 3"),
 						
+						ME("Entrance.png", 1064, 750, "Entrance shuffle (Pirate Fortress Entrance)", "MM_EXTERIOR_GATE_FROM_SEWERS"),
 						ME("Entrance.png", 923, 285, "Entrance shuffle (Pirate Fortress Entrance)", "MM_EXTERIOR_DOOR_FROM_SEWERS")
                     }
                 },
@@ -11461,7 +11472,10 @@ namespace OoTMMTracker.Services
 						M("Wonder.png", 360, 147, 24, "MM Pirate Fortress Interior Wonder Item Skull Eyes 3", "Pirate Fortress Interior Wonder Item Skull Eyes 3"),
 						M("Wonder.png", 414, 147, 24, "MM Pirate Fortress Interior Wonder Item Skull Eyes 4", "Pirate Fortress Interior Wonder Item Skull Eyes 4"),
 						M("Wonder.png", 425, 167, 24, "MM Pirate Fortress Interior Wonder Item Skull Eyes 5", "Pirate Fortress Interior Wonder Item Skull Eyes 5"),
-						M("Wonder.png", 436, 147, 24, "MM Pirate Fortress Interior Wonder Item Skull Eyes 6", "Pirate Fortress Interior Wonder Item Skull Eyes 6")
+						M("Wonder.png", 436, 147, 24, "MM Pirate Fortress Interior Wonder Item Skull Eyes 6", "Pirate Fortress Interior Wonder Item Skull Eyes 6"),
+						
+						ME("Entrance.png", 210, 425, "Entrance shuffle (Pirate Fortress Entrance)", "MM_PIRATE_FORTRESS_EXTERIOR_FROM_INTERIOR"),
+						ME("Entrance.png", 658, 559, "Entrance shuffle (Pirate Fortress Entrance)", "MM_PIRATE_FORTRESS_EXTERIOR_LOOKOUT")
                     }
                 }
 			};
