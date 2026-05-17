@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
@@ -504,11 +505,43 @@ namespace OoTMMTracker.Controls
                 if (MarkDestRect(mark, in mapRect, scale).Contains(e.Location))
                 {
                     tip = mark.Tooltip;
-                    if (mark.IsEntranceShuffleMark && _spoilerLog != null &&
-                        EntranceMapNavigation.TryGetDestinationSubMapDisplayName(
-                            _spoilerLog.Entrances, mark.EntranceFromId, out var toSubMap))
+                    if (mark.IsEntranceShuffleMark)
                     {
-                        tip = $"To {toSubMap}";
+                        // 1. Try shuffled connection from spoiler log
+                        if (_spoilerLog != null &&
+                            EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, mark.EntranceFromId, out var destLine) &&
+                            EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out var shuffledRegion, out var shuffledSub, out _))
+                        {
+                            tip = $"Shuffled: {shuffledRegion}" + (shuffledSub != null && shuffledSub != shuffledRegion ? $" ({shuffledSub})" : "");
+                        }
+                        // 2. Try default transition
+                        else if (DefaultTransitionService.HasDefaultTransition(mark.EntranceFromId))
+                        {
+                            // Direct lookup in DestinationEntranceIds
+                            if (DefaultTransitionService.TryGetMapForDefaultTransition(mark.EntranceFromId, out var defaultRegion, out var defaultSub, out _))
+                            {
+                                tip = $"Vanilla: {defaultRegion}" + (defaultSub != null && defaultSub != defaultRegion ? $" ({defaultSub})" : "");
+                            }
+                            else
+                            {
+                                tip = "Vanilla connection";
+                            }
+                        }
+                        // 3. Special case: wallmasters
+                        else if (DefaultTransitionService.IsWallmaster(mark.EntranceFromId))
+                        {
+                            tip = "Wallmaster - teleports within same area";
+                        }
+                        // 4. Try vanilla connection via DestinationEntranceIds
+                        else if (EntranceMapNavigation.TryGetMapForDestinationId(mark.EntranceFromId, out var vanillaRegion, out var vanillaSub, out _))
+                        {
+                            tip = $"Vanilla: {vanillaRegion}" + (vanillaSub != null && vanillaSub != vanillaRegion ? $" ({vanillaSub})" : "");
+                        }
+                        // 5. No connection found
+                        else
+                        {
+                            tip = $"{mark.Tooltip}\n(No destination configured)";
+                        }
                     }
                     break;
                 }
@@ -532,28 +565,72 @@ namespace OoTMMTracker.Controls
         private bool TryNavigateEntrance(MapMark mark, out string? error)
         {
             error = null;
-            if (_spoilerLog == null)
+            string? region = null;
+            string? sub = null;
+            string? game = null;
+            bool success = false;
+
+            // 1. Try shuffled connection from spoiler log (if log exists)
+            if (_spoilerLog != null && EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, mark.EntranceFromId!, out var destLine))
             {
-                error = "Load a spoiler log with an Entrances section.";
+                if (EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out region, out sub, out game))
+                {
+                    success = true;
+                }
+                else
+                {
+                    var id = EntranceMapNavigation.TryExtractEntranceId(destLine);
+                    error = "No sub-map lists this destination id in MapRegionsData.\n" +
+                            "On the target map's sub-region, set DestinationEntranceIds to include the id inside " +
+                            "the last (... ) or {...} id on the To side of the Entrances row.\n" +
+                            $"Missing id: {id ?? "(none)"}\nTo: {destLine}";
+                    return false;
+                }
+            }
+            // 2. Try default transition (warp songs, owls, spawns)
+            else if (DefaultTransitionService.HasDefaultTransition(mark.EntranceFromId!))
+            {
+                // Direct lookup in DestinationEntranceIds
+                if (DefaultTransitionService.TryGetMapForDefaultTransition(mark.EntranceFromId!, out region, out sub, out game))
+                {
+                    success = true;
+                }
+                else
+                {
+                    error = $"No map destination configured for default transition: {mark.EntranceFromId}";
+                    return false;
+                }
+            }
+            // 3. Special case: wallmasters
+            else if (DefaultTransitionService.IsWallmaster(mark.EntranceFromId!))
+            {
+                error = "Wallmaster teleports within the same area. No region change.";
                 return false;
             }
-            if (!EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, mark.EntranceFromId!, out var destLine))
+            // 4. Try vanilla connection using DestinationEntranceIds lookup
+            else if (EntranceMapNavigation.TryGetMapForDestinationId(mark.EntranceFromId!, out region, out sub, out game))
             {
-                error = $"This entrance ({mark.EntranceFromId}) is not listed in the loaded Entrances.";
-                return false;
+                // Found in DestinationEntranceIds - this is a vanilla connection
+                success = true;
+                Debug.WriteLine($"[MapTrackerPanel] Vanilla connection found via DestinationEntranceIds: {mark.EntranceFromId} -> {region}/{sub} ({game})");
             }
-            if (!EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out var region, out var sub, out var game))
+            // 5. Not found
+            else
             {
-                var id = EntranceMapNavigation.TryExtractEntranceId(destLine);
-                error = "No sub-map lists this destination id in MapRegionsData.\n" +
-                        "On the target map's sub-region, set DestinationEntranceIds to include the id inside " +
-                        "the last (... ) or {...} id on the To side of the Entrances row.\n" +
-                        $"Missing id: {id ?? "(none)"}\nTo: {destLine}";
+                error = $"This entrance ({mark.EntranceFromId}) has no known destination.\n" +
+                       "If entrance shuffle is enabled, load a spoiler log to see shuffled connections.\n" +
+                       "Otherwise, this may be a vanilla connection that needs to be configured in MapRegionsData.";
                 return false;
             }
 
-            NavigateMapTo?.Invoke(region, sub, game);
-            return true;
+            if (success && region != null)
+            {
+                NavigateMapTo?.Invoke(region, sub, game);
+                return true;
+            }
+
+            error = $"Could not navigate to destination for: {mark.EntranceFromId}";
+            return false;
         }
 
         private bool IsMarkVisible(MapMark mark)
@@ -563,10 +640,11 @@ namespace OoTMMTracker.Controls
 
             if (mark.IsEntranceShuffleMark)
             {
-                if (_spoilerLog == null || _spoilerLog.Entrances.Count == 0)
-                    return false;
-                if (!EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, mark.EntranceFromId!, out _))
-                    return false;
+                // Always show entrance markers:
+                // - If in spoiler log (shuffled), show as shuffled connection
+                // - If not in spoiler log but has default transition, show as vanilla
+                // - If not in spoiler log and no default transition, still show (will be handled elsewhere)
+                // We don't hide entrance markers based on spoiler log presence
             }
 
             if (!IsMarkKnown(mark) || IsMarkComplete(mark)) return false;
