@@ -432,13 +432,10 @@ namespace OoTMMTracker.Controls
             }
             else if (e.Button == MouseButtons.Right)
             {
-                MapMark? entranceMark = candidates.Select(c => c.mark).FirstOrDefault(m => m.IsEntranceShuffleMark);
-                if (entranceMark == null && _selectedMark?.IsEntranceShuffleMark == true)
-                    entranceMark = _selectedMark;
-
-                if (entranceMark != null)
+                // Navigation only works with selected mark
+                if (_selectedMark?.IsEntranceShuffleMark == true)
                 {
-                    if (TryNavigateEntrance(entranceMark, out string? err))
+                    if (TryNavigateEntrance(_selectedMark, out string? err))
                     {
                         _selectedMark = null;
                         _clickCandidates.Clear();
