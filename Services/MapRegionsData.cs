@@ -3828,15 +3828,15 @@ namespace OoTMMTracker.Services
                         MJ("Rupee.png", 556, 217, 24, "MM Deku Palace Rupee Right 12", "Deku Palace", "Deku Palace Rupee Right 12"),
                         MJ("Rupee.png", 574, 205, 24, "MM Deku Palace Rupee Right 13", "Deku Palace", "Deku Palace Rupee Right 13"),
 						
-						ME("Entrance.png", 356, 147, "Entrance shuffle (JP Climb Left Grotto)", "MM_GROTTO_JP_CLIMB_LEFT"),
+						MEJ("Entrance.png", 356, 147, "Entrance shuffle (JP Climb Left Grotto)", "Deku Palace", "MM_GROTTO_JP_CLIMB_LEFT"),
 						MENJ("Entrance.png", 733, 74, "Entrance shuffle (Bean Grotto)", "Deku Palace", "MM_GROTTO_BEAN"),
 						MEJ("Entrance.png", 596, 1, "Entrance shuffle (Bean Grotto)", "Deku Palace", "MM_GROTTO_BEAN"),
-						ME("Entrance.png", 539, 2, "Entrance shuffle (JP Line End Grotto)", "MM_GROTTO_JP_LINE_END"),
+						MEJ("Entrance.png", 539, 2, "Entrance shuffle (JP Line End Grotto)", "Deku Palace", "MM_GROTTO_JP_LINE_END"),
 						ME("Entrance.png", 392, 53, "Entrance shuffle (Deku King Chamber Cage)", "MM_DEKU_PALACE_THRONE_CAGE"),
 						ME("Entrance.png", 465, 163, "Entrance shuffle (Deku King Chamber)", "MM_DEKU_PALACE_THRONE"),
 						ME("Entrance.png", 52, 2, "Entrance shuffle (Deku Shrine)", "MM_DEKU_SHRINE"),
-						ME("Entrance.png", 235, 10, "Entrance shuffle (JP Line Start Grotto)", "MM_GROTTO_JP_LINE_START"),
-						ME("Entrance.png", 570, 147, "Entrance shuffle (JP Climb Right Grotto)", "MM_GROTTO_JP_CLIMB_RIGHT"),
+						MEJ("Entrance.png", 235, 10, "Entrance shuffle (JP Line Start Grotto)", "Deku Palace", "MM_GROTTO_JP_LINE_START"),
+						MEJ("Entrance.png", 570, 147, "Entrance shuffle (JP Climb Right Grotto)", "Deku Palace", "MM_GROTTO_JP_CLIMB_RIGHT"),
 						ME("Entrance.png", 463, 571, "Entrance shuffle (Swamp Main Entrance)", "MM_SWAMP_FROM_PALACE_MAIN_ENTRANCE"),
 						ME("Entrance.png", 641, 486, "Entrance shuffle (Swamp Ledge)", "MM_SWAMP_FROM_PALACE_LEDGE")
                     }
