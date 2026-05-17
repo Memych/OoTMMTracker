@@ -10562,7 +10562,7 @@ namespace OoTMMTracker.Services
 						M("Chest.png", 365, 304, 40, "MM Great Bay Temple Entrance Chest", "Great Bay Temple Entrance Chest"),
 						
 						ME("Entrance.png", 356, 303, "Entrance shuffle (Gyorg)", "MM_BOSS_TEMPLE_GREAT_BAY"),
-						ME("Entrance.png", 653, 310, "Entrance shuffle (Zora Cape)", "MM_BOSS_TEMPLE_GREAT_BAY")
+						ME("Entrance.png", 653, 310, "Entrance shuffle (Zora Cape)", "MM_GREAT_BAY_FROM_TEMPLE")
                     }
                 },
 				new MapSubRegion
