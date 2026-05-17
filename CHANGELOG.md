@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.2.2
+
+### New Features
+- Added vanilla entrance markers display - entrance icons now show even without spoiler log
+- Enhanced entrance navigation to work without loaded spoiler log
+- Improved tooltips for entrance markers showing destination in "Region (Sub-region)" format
+
+### Improvements
+- Entrance markers are now always visible regardless of spoiler log presence
+- Navigation to vanilla destinations works without requiring spoiler log
+- Tooltips for shuffled entrances show destination region and sub-region
+- Tooltips for vanilla entrances show "Vanilla: Region (Sub-region)" format
+- Better error messages when entrance destination is not configured
+
+### Bug Fixes
+- Fixed MM NPC order in soul tracking
+- Fixed item marker display issues
+- Fixed entrance navigation requiring spoiler log even for vanilla connections
+- Corrected tooltip display for entrance markers with missing destination configuration
+
 ## v1.2.1
 
 ### New Features
