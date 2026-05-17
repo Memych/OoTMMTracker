@@ -173,8 +173,8 @@ namespace OoTMMTracker.Services
 					},
                     Marks = new List<MapMark>
                     {
-                        ME("Entrance.png", 640, 8, "Entrance shuffle (Death Mountain Trail)", "OOT_DEATH_MOUNTAIN_CRATER"),
-                        ME("Entrance.png", 773, 433, "Entrance shuffle (Goron City)", "OOT_CRATER_FROM_GORON_CITY"),
+                        ME("Entrance.png", 640, 8, "Entrance shuffle (Death Mountain Trail)", "OOT_TRAIL_SUMMIT_FROM_CRATER"),
+                        ME("Entrance.png", 773, 433, "Entrance shuffle (Goron City)", "OOT_GORON_CITY_FROM_CRATER"),
                         ME("Entrance.png", 451, 563, "Entrance shuffle (Fire Temple)", "OOT_TEMPLE_FIRE"),
                         ME("Entrance.png", 696, 182, "Entrance shuffle (Great Fairy Fountain)", "OOT_FAIRY_MAGIC2"),
                         ME("Entrance.png", 720, 489, "Entrance shuffle (Deku Scrubs Grotto)", "OOT_GROTTO_SCRUBS3_DMC"),
