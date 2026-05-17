@@ -11722,7 +11722,12 @@ namespace OoTMMTracker.Services
                 {
                     Name = "Interior",
                     BackgroundImage = "region maps/MM/Ikana_Canyon/Castle_Inside.png",
-                    DestinationEntranceIds = new List<string> { "MM_IKANA_CASTLE" },
+                    DestinationEntranceIds = new List<string>
+					{
+						"MM_IKANA_CASTLE",
+						"MM_IKANA_CASTLE_INTERIOR_KEG",
+						"MM_IKANA_CASTLE_INTERIOR_BLOCK"
+					},
                     Marks = new List<MapMark>
                     {
 						M("NPC.png", 462, 59, 40, "MM Ancient Castle of Ikana Song Emptiness", "Ancient Castle of Ikana Song Emptiness"),
