@@ -3322,8 +3322,8 @@ namespace OoTMMTracker.Services
                         M("Wonder.png", 298, 84, 24, "MM Clock Town South Wonder Item 3", "Clock Town South Wonder Item 3"),
 						
 						ME("Entrance.png", 332, 265, "Entrance shuffle (Clock Tower)", "MM_CLOCK_TOWER_FROM_CLOCK_TOWN"),
-						ME("Entrance.png", 362, 523, "Entrance shuffle (West Clock Town Bottom)", "MM_CLOCK_TOWN_SOUTH_BOTTOM_FROM_WEST"),
-						ME("Entrance.png", 649, 193, "Entrance shuffle (East Clock Town Bottom)", "MM_CLOCK_TOWN_SOUTH_BOTTOM_FROM_EAST"),
+						ME("Entrance.png", 362, 523, "Entrance shuffle (West Clock Town Bottom)", "MM_CLOCK_TOWN_WEST_FROM_SOUTH_BOTTOM"),
+						ME("Entrance.png", 649, 193, "Entrance shuffle (East Clock Town Bottom)", "MM_CLOCK_TOWN_EAST_FROM_SOUTH_BOTTOM"),
 						ME("Entrance.png", 54, 119, "Entrance shuffle (North Clock Town)", "MM_CLOCK_TOWN_NORTH_FROM_SOUTH"),
 						ME("Entrance.png", 350, 156, "Entrance shuffle (East Clock Town Top)", "MM_CLOCK_TOWN_EAST_FROM_SOUTH_TOP"),
 						ME("Entrance.png", 32, 329, "Entrance shuffle (West Clock Town Top)", "MM_CLOCK_TOWN_WEST_FROM_SOUTH_TOP"),
@@ -3445,9 +3445,9 @@ namespace OoTMMTracker.Services
                         M("Stray_Fairy.png", 387, 352, 40, "MM Clock Town Stray Fairy", "Clock Town Stray Fairy"),
 						
 						ME("Entrance.png", 1, 170, "Entrance shuffle (Mayor's Office)", "MM_MAYORS_OFFICE"),
-						ME("Entrance.png", 81, 152, "Entrance shuffle (Astral Observatory)", "MM_ASTRAL_OBSERVATORY"),
+						ME("Entrance.png", 81, 152, "Entrance shuffle (Astral Observatory)", "MM_ASTRAL_OBSERVATORY_FROM_CLOCK_TOWN_EAST"),
 						ME("Entrance.png", 37, 318, "Entrance shuffle (Stock Pot Inn Roof)", "MM_STOCK_POT_INN_ROOF"),
-						ME("Entrance.png", 522, 290, "Entrance shuffle (Honey & Darling)", "MM_HONEY_AND_DARLING"),
+						ME("Entrance.png", 522, 290, "Entrance shuffle (Honey & Darling)", "MM_HONEY_AND_DARLING_GAME"),
 						ME("Entrance.png", 287, 293, "Entrance shuffle (Milk Bar)", "MM_MILK_BAR"),
 						ME("Entrance.png", 233, 381, "Entrance shuffle (Stock Pot Inn)", "MM_STOCK_POT_INN"),
 						ME("Entrance.png", 685, 384, "Entrance shuffle (Town Archery)", "MM_TOWN_ARCHERY"),
@@ -11463,7 +11463,11 @@ namespace OoTMMTracker.Services
                 {
                     Name = "Exterior",
                     BackgroundImage = "region maps/MM/Fortress/Exterior.png",
-                    DestinationEntranceIds = new List<string> { },
+                    DestinationEntranceIds = new List<string>
+					{
+						"MM_PIRATE_FORTRESS_INTERIOR",
+						"MM_PIRATE_FORTRESS_INTERIOR_FROM_LOOKOUT"
+					},
                     Marks = new List<MapMark>
                     {
 						M("Barrel.png", 136, 29, 24, "MM Pirate Fortress Interior Barrel Outside", "Pirate Fortress Interior Barrel Outside"),
