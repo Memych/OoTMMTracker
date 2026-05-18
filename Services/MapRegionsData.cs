@@ -6104,7 +6104,7 @@ namespace OoTMMTracker.Services
 						ME("Entrance.png", 801, 1574, "Entrance shuffle (Milk Road)", "MM_MILK_ROAD_FROM_FIELD"),
 						ME("Entrance.png", 1460, 1548, "Entrance shuffle (Cow Grotto)", "MM_GROTTO_COW_FIELD"),
 						ME("Entrance.png", 1716, 1447, "Entrance shuffle (Tall Grass Grotto)", "MM_GROTTO_GENERIC_GRASS"),
-						ME("Entrance.png", 1936, 679, "Entrance shuffle (Pillar Grotto)", "MM_GROTTO_GENERIC_FIELD_PILLAR"),
+						ME("Entrance.png", 1938, 752, "Entrance shuffle (Pillar Grotto)", "MM_GROTTO_GENERIC_FIELD_PILLAR"),
 						ME("Entrance.png", 2069, 1022, "Entrance shuffle (Deku Scrub Grotto)", "MM_GROTTO_SCRUB"),
 						ME("Entrance.png", 1136, 1416, "Entrance shuffle (Peahat Grotto)", "MM_GROTTO_PEAHAT"),
 						ME("Entrance.png", 1142, 289, "Entrance shuffle (Dodongo Grotto)", "MM_GROTTO_DODONGO"),
