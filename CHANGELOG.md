@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.2.3
+
+### New Features
+- Added region completion indicators in map filters - shows which regions are fully cleared
+
+### Improvements
+- Region and sub-region filters now display completion status with visual indicators
+- Fully completed regions show with green checkmark (✓) and green text
+- Partially completed regions show progress counter (found/total)
+- Completion indicators update dynamically when marking/unmarking locations
+- Indicators respect Colors mode - exclude consumables/traps from counts when enabled
+- Text color changed to black for better visibility on light backgrounds
+
+### Bug Fixes
+- Fixed adult/child filter persistence during map transitions via entrance markers
+- Fixed compilation errors in custom ComboBox drawing code
+- Improved refresh logic for completion indicators across all progress operations
+
 ## v1.2.2
 
 ### New Features
