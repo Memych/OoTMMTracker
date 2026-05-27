@@ -29,6 +29,7 @@ namespace OoTMMTracker.Models
         public bool MmIronBoots { get; set; } = false;
         public bool MmHoverBoots { get; set; } = false;
         public bool MmDekuShield { get; set; } = false;
+		public bool MmBoomerang { get; set; } = false;
 
         // General
         public bool ColossalWallet { get; set; } = false;
@@ -53,6 +54,7 @@ namespace OoTMMTracker.Models
         public bool SharedOcarina { get; set; } = false;
         public bool SharedHammer { get; set; } = false;
         public bool SharedBottles { get; set; } = false;
+		public bool SharedBoomerang { get; set; } = false;
         // MM Clocks
         public bool ClocksEnabled { get; set; } = false;      // clocks: true
         public string ProgressiveClocks { get; set; } = "separate"; // progressiveClocks: separate/ascending/descending
@@ -86,14 +88,15 @@ namespace OoTMMTracker.Models
         public bool SharedMaskTruth { get; set; } = false;
         public bool SharedMaskBlast { get; set; } = false;
         public bool SharedMaskStone { get; set; } = false;
+		public bool SharedMaskKamaro { get; set; } = false;
         // OoT exclusive masks
         public bool OotBlastMask { get; set; } = false;   // blastMaskOot
         public bool OotStoneMask { get; set; } = false;   // stoneMaskOot
+		public bool OotKamaroMask { get; set; } = false;
         // MM additional items
         public bool MmSticksNuts { get; set; } = false;    // sticksNutsUpgradesMm
         public bool MmShortHookshot { get; set; } = false; // shortHookshotMm
         public bool MmHammer { get; set; } = false;        // hammerMm
-        public bool MmFairyFountain { get; set; } = false;
         // MM spells
         public bool MmSpellFire { get; set; } = false;   // spellFireMm
         public bool MmSpellWind { get; set; } = false;   // spellWindMm
@@ -272,6 +275,8 @@ namespace OoTMMTracker.Models
             cfg.SharedMaskBlast     = GetBool(log, "sharedMaskBlast");
             cfg.SharedMaskStone     = GetBool(log, "sharedMaskStone");
             cfg.SharedScarecrow     = GetBool(log, "sharedScarecrow");
+			cfg.SharedBoomerang     = GetBool(log, "sharedBoomerang");
+			cfg.SharedMaskKamaro    = GetBool(log, "sharedMaskKamaro");
             } // end bothGames
             cfg.ClocksEnabled       = cfg.HasMm && GetBool(log, "clocks");
             cfg.ProgressiveClocks   = log.Settings.TryGetValue("progressiveClocks", out var pc) ? pc : "separate";
@@ -303,7 +308,8 @@ namespace OoTMMTracker.Models
             cfg.MmSticksNuts        = GetBool(log, "sticksNutsUpgradesMm");
             cfg.MmShortHookshot     = GetBool(log, "shortHookshotMm");
             cfg.MmHammer            = GetBool(log, "hammerMm");
-            cfg.MmFairyFountain     = GetBool(log, "fairyFountainFairyShuffleMm");
+			cfg.MmBoomerang         = GetBool(log, "boomerangMm");
+			cfg.OotKamaroMask       = GetBool(log, "kamaroMaskOot");
             // Bombchu behavior — read from log (priority over saved settings)
             if (log.Settings.TryGetValue("bombchuBehaviorOot", out var bcOot))
                 cfg.BombchuBehaviorOot = bcOot == "bagSeparate" ? "bag" : bcOot == "bombBag" ? "bombBag" : "toggle";
