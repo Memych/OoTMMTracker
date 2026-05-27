@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.2.4
+
+### New Features
+- Added MM Boomerang item support
+- Added OoT Kamaro Mask item support
+
+### Improvements
+- Fixed zoom percentage counter display during map scrolling
+- Removed blue selection highlight from map filter dropdowns
+- Map filter dropdowns now maintain consistent appearance without visual selection indicators
+
+### Bug Fixes
+- Fixed map filter dropdowns showing blue highlight when selecting regions/sub-regions
+- Improved visual consistency of filter controls
+
 ## v1.2.3
 
 ### New Features
