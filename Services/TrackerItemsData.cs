@@ -173,7 +173,7 @@ namespace OoTMMTracker.Services
             if (scaleMax > 0 && !cfg.SharedScales)
                 items.Add(new() { Id="mm_scale", Name="Scale (MM)", Type=TrackerItemType.Equipment, MaxCount=scaleMax, StepNames=scaleSteps, IconPath=scaleIcon,
                     StepIconPaths=cfg.OotBronzeScale ? ScaleIcons3 : ScaleIcons2 });
-
+			
             return items;
         }
 
@@ -338,6 +338,9 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="oot_blast_mask",  Name="Blast Mask",    Type=TrackerItemType.Mask, IconPath="masks/blast_mask.png" });
             if (cfg.OotStoneMask && !cfg.SharedMaskStone)
                 items.Add(new() { Id="oot_stone_mask",  Name="Stone Mask",    Type=TrackerItemType.Mask, IconPath="masks/stone_mask.png" });
+			if (cfg.OotKamaroMask) 
+				items.Add(new() { Id="oot_kamaro_mask", Name="Kamaro Mask",   Type=TrackerItemType.Mask, IconPath="masks/kamaros_mask.png" });
+
 
             return items;
         }
@@ -404,6 +407,8 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="blast_mask",    Name="Blast Mask",    Type=TrackerItemType.Mask, IconPath="masks/blast_mask.png" });
             if (cfg.SharedMaskStone)
                 items.Add(new() { Id="stone_mask",    Name="Stone Mask",    Type=TrackerItemType.Mask, IconPath="masks/stone_mask.png" });
+			if (cfg.SharedMaskKamaro) 
+				items.Add(new TrackerItem { Id = "sh_kamaro_mask", Name = "Kamaro Mask", Type = TrackerItemType.Mask, IconPath = "masks/kamaros_mask.png" });
 
             return items;
         }
@@ -1331,7 +1336,9 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="mm_nayrus_love",  Name="Nayru's Love (MM)",  Type=TrackerItemType.Item, MaxCount=1, IconPath="items/nayrus_love.png" });
             if (cfg.MmHammer && !cfg.SharedHammer)
                 items.Add(new() { Id="mm_hammer",  Name="Megaton Hammer (MM)", Type=TrackerItemType.Item, MaxCount=1, IconPath="items/megaton_hammer.png" });
-
+			if (cfg.MmBoomerang) 
+				items.Add(new() { Id="mm_boomerang", Name="Boomerang (MM)", Type=TrackerItemType.Item, MaxCount=1, IconPath="items/boomerang.png" });
+			
             return items;
         }
 
@@ -1358,7 +1365,9 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="sh_farores_wind", Name="Farore's Wind", Type=TrackerItemType.Item, MaxCount=1, IconPath="items/farores_wind.png" });
             if (cfg.SharedSpellLove)
                 items.Add(new() { Id="sh_nayrus_love",  Name="Nayru's Love",  Type=TrackerItemType.Item, MaxCount=1, IconPath="items/nayrus_love.png" });
-            if (cfg.SharedHookshot)
+            if (cfg.SharedBoomerang) 
+				items.Add(new TrackerItem { Id = "sh_boomerang", Name = "Boomerang", Type = TrackerItemType.Item, IconPath = "items/boomerang.png" });
+			if (cfg.SharedHookshot)
                 items.Add(new() { Id="sh_hookshot", Name="Hookshot", Type=TrackerItemType.Item, MaxCount=2,
                     StepNames=new[]{"Hookshot","Longshot"},
                     StepIconPaths=new[]{"items/short_hookshot.png","items/longshot.png"}, IconPath="items/short_hookshot.png" });
