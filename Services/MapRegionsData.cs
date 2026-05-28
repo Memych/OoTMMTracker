@@ -1607,7 +1607,7 @@ namespace OoTMMTracker.Services
                         ME("Entrance.png", 504, 181, "Entrance shuffle (Skulltula House)", "OOT_HOUSE_SKULLTULA"),
                         ME("Entrance.png", 484, 91, "Entrance shuffle (Impa House Front)", "OOT_HOUSE_IMPA"),
                         ME("Entrance.png", 411, 79, "Entrance shuffle (Impa House Back)", "OOT_HOUSE_IMPA_BACK"),
-                        ME("Entrance.png", 363, 318, "Entrance shuffle (Granny Shop)", "OOT_SHOP_GRANNY"),
+                        MEA("Entrance.png", 363, 318, "Entrance shuffle (Granny Shop)", "adult", "OOT_SHOP_GRANNY"),
                         MEA("Entrance.png", 510, 425, "Entrance shuffle (Bazaar)", "adult", "OOT_KAKARIKO_BAZAAR"),
                         MEA("Entrance.png", 398, 224, "Entrance shuffle (Shooting Gallery Adult)", "adult", "OOT_ADULT_ARCHERY"),
                         ME("Entrance.png", 246, 253, "Entrance shuffle (Windmill)", "OOT_WINDMILL"),
@@ -4459,7 +4459,7 @@ namespace OoTMMTracker.Services
 						ME("Entrance.png", 193, 469, "Entrance shuffle (Beneath The Well)", "MM_BENEATH_THE_WELL"),
 						ME("Entrance.png", 327, 579, "Entrance shuffle (Secret Shrine)", "MM_SECRET_SHRINE"),
 						ME("Entrance.png", 653, 549, "Entrance shuffle (Road to Ikana)", "MM_IKANA_ROAD_FROM_VALLEY"),
-						ME("Entrance.png", 409, 218, "Entrance shuffle (Ikana Castle Gardens)", "MM_IKANA_CASTLE_GARDENS"),
+						ME("Entrance.png", 409, 218, "Entrance shuffle (Ikana Castle Exterior)", "MM_IKANA_CASTLE_GARDENS"),
 						ME("Entrance.png", 271, 42, "Entrance shuffle (Stone Tower)", "MM_STONE_TOWER"),
 						ME("Entrance.png", 84, 267, "Entrance shuffle (Ghost Hut)", "MM_GHOST_HUT"),
 						ME("Entrance.png", 254, 270, "Entrance shuffle (Music Box House)", "MM_MUSIC_BOX_HOUSE"),
@@ -11697,7 +11697,8 @@ namespace OoTMMTracker.Services
 					DestinationEntranceIds = new List<string>
 					{
 						"MM_IKANA_CASTLE_EXTERIOR_FROM_CASTLE",
-						"MM_IKANA_CASTLE_EXTERIOR_FROM_WELL"
+						"MM_IKANA_CASTLE_EXTERIOR_FROM_WELL",
+						"MM_IKANA_CASTLE_GARDENS"
 					},
                     Marks = new List<MapMark>
                     {
@@ -11720,6 +11721,7 @@ namespace OoTMMTracker.Services
 						ME("Entrance.png", 456, 406, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE"),
 						ME("Entrance.png", 464, 177, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE_INTERIOR_KEG"),
 						ME("Entrance.png", 585, 146, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE_INTERIOR_BLOCK")
+						ME("Entrance.png", 307, 553, "Entrance shuffle (Ikana Canyon)", "MM_IKANA_CANYON_FROM_CASTLE_GARDENS")
                     }
                 },
 				new MapSubRegion
