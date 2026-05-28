@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.2.5
+
+### New Features
+- Added full support for MM Song Events Shuffle (Majora's Mask)
+- Added cross-game song support (e.g. Song of Healing in OoT, Zelda's Lullaby in MM)
+- Added configurable shared song options for cross-game songs
+- Expanded Song Events tab with full MM Song Events Shuffle support
+- Updated song list in Song Events tab to include all OoT and MM songs
+
+### Improvements
+- Improved UI responsiveness in Song Events tab when toggling shuffle settings
+- Refactored song configuration parsing for better maintainability
+- Fixed Song Events dropdowns remaining editable when shuffle is disabled
+
+### Bug Fixes
+- Fixed compilation errors in custom ComboBox drawing code
+
 ## v1.2.4
 
 ### New Features
