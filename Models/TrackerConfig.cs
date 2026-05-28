@@ -102,18 +102,47 @@ namespace OoTMMTracker.Models
         public bool MmSpellWind { get; set; } = false;   // spellWindMm
         public bool MmSpellLove { get; set; } = false;
         // Songs
-        public bool MmSunSong { get; set; } = false;           // sunSongMm
         public bool MmFairyOcarina { get; set; } = false;      // fairyOcarinaMm — ocarina progression MM
-        public bool OotElegy { get; set; } = false;            // elegyOot
-        public bool ProgressiveGoronLullaby { get; set; } = true; // progressiveGoronLullaby
+        public bool ProgressiveGoronLullabyOot { get; set; } = true; // progressiveGoronLullabyOot
+        public bool ProgressiveGoronLullabyMm { get; set; } = true; // progressiveGoronLullabyMm
         public bool FreeScarecrowOot { get; set; } = false;    // freeScarecrowOot
         public bool FreeScarecrowMm { get; set; } = false;     // freeScarecrowMm
+		public bool SongHealingOot { get; set; } = false;
+		public bool SongSoaringOot { get; set; } = false;
+		public bool SongElegyOot { get; set; } = false;
+		public bool SongAwakeningOot { get; set; } = false;
+		public bool SongGoronOot { get; set; } = false;
+		public bool SongZoraOot { get; set; } = false;
+		public bool SongOrderOot { get; set; } = false;
+		public bool SongSunMm { get; set; } = false;
+		public bool SongZeldaLullabyMm { get; set; } = false;
+		public bool SongSariasMm { get; set; } = false;
+		public bool SongMinuetMm { get; set; } = false;
+		public bool SongBoleroMm { get; set; } = false;
+		public bool SongSerenadeMm { get; set; } = false;
+		public bool SongRequiemMm { get; set; } = false;
+		public bool SongNocturneMm { get; set; } = false;
+		public bool SongPreludeMm { get; set; } = false;
         // Shared songs
-        public bool SharedSongEpona { get; set; } = false;
-        public bool SharedSongStorms { get; set; } = false;
         public bool SharedSongTime { get; set; } = false;
-        public bool SharedSongSun { get; set; } = false;
-        public bool SharedSongElegy { get; set; } = false;
+		public bool SharedSongEpona { get; set; } = false;
+		public bool SharedSongStorms { get; set; } = false;
+		public bool SharedSongSun { get; set; } = false;
+		public bool SharedSongZeldaLullaby { get; set; } = false;
+		public bool SharedSongSarias { get; set; } = false;
+		public bool SharedSongHealing { get; set; } = false;
+		public bool SharedSongSoaring { get; set; } = false;
+		public bool SharedSongElegy { get; set; } = false;
+		public bool SharedSongAwakening { get; set; } = false;
+		public bool SharedSongGoron { get; set; } = false;
+		public bool SharedSongZora { get; set; } = false;
+		public bool SharedSongOrder { get; set; } = false;
+		public bool SharedSongMinuet { get; set; } = false;
+		public bool SharedSongBolero { get; set; } = false;
+		public bool SharedSongSerenade { get; set; } = false;
+		public bool SharedSongRequiem { get; set; } = false;
+		public bool SharedSongNocturne { get; set; } = false;
+		public bool SharedSongPrelude { get; set; } = false;
         public bool SharedScarecrow { get; set; } = false;
         // Ocarina buttons
         public bool OotOcarinaButtons { get; set; } = false;   // ocarinaButtonsShuffleOot
@@ -204,6 +233,7 @@ namespace OoTMMTracker.Models
         public bool DungeonRewardShuffle { get; set; } = false;
         // Song Events Shuffle (OoT)
         public bool SongEventsShuffleOot { get; set; } = false;
+		public bool SongEventsShuffleMm { get; set; } = false;
         // Special Conditions for Ganon BK custom
         public int GanonBkRequired { get; set; } = 0;
         public GanonBkConditions GanonBk { get; set; } = new();
@@ -261,11 +291,25 @@ namespace OoTMMTracker.Models
             cfg.SharedSpellLove     = GetBool(log, "sharedSpellLove");
             cfg.SharedStoneAgony    = GetBool(log, "sharedStoneAgony");
             cfg.SharedSpinUpgrade   = GetBool(log, "sharedSpinUpgrade");
-            cfg.SharedSongEpona     = GetBool(log, "sharedSongEpona");
-            cfg.SharedSongStorms    = GetBool(log, "sharedSongStorms");
-            cfg.SharedSongTime      = GetBool(log, "sharedSongTime");
-            cfg.SharedSongSun       = GetBool(log, "sharedSongSun");
-            cfg.SharedSongElegy     = GetBool(log, "sharedSongElegy");
+			cfg.SharedSongTime = GetBool(log, "sharedSongTime");
+			cfg.SharedSongEpona = GetBool(log, "sharedSongEpona");
+			cfg.SharedSongStorms = GetBool(log, "sharedSongStorms");
+			cfg.SharedSongSun = GetBool(log, "sharedSongSun");
+			cfg.SharedSongZeldaLullaby = GetBool(log, "sharedSongZeldaLullaby");
+			cfg.SharedSongSarias = GetBool(log, "sharedSongSarias");
+			cfg.SharedSongHealing = GetBool(log, "sharedSongHealing");
+			cfg.SharedSongSoaring = GetBool(log, "sharedSongSoaring");
+			cfg.SharedSongElegy = GetBool(log, "sharedSongElegy");
+			cfg.SharedSongAwakening = GetBool(log, "sharedSongAwakening");
+			cfg.SharedSongGoron = GetBool(log, "sharedSongGoron");
+			cfg.SharedSongZora = GetBool(log, "sharedSongZora");
+			cfg.SharedSongOrder = GetBool(log, "sharedSongOrder");
+			cfg.SharedSongMinuet = GetBool(log, "sharedSongMinuet");
+			cfg.SharedSongBolero = GetBool(log, "sharedSongBolero");
+			cfg.SharedSongSerenade = GetBool(log, "sharedSongSerenade");
+			cfg.SharedSongRequiem = GetBool(log, "sharedSongRequiem");
+			cfg.SharedSongNocturne = GetBool(log, "sharedSongNocturne");
+			cfg.SharedSongPrelude = GetBool(log, "sharedSongPrelude");
             cfg.SharedOcarinaButtons = GetBool(log, "sharedOcarinaButtons");
             cfg.SharedMaskGoron     = GetBool(log, "sharedMaskGoron");
             cfg.SharedMaskZora      = GetBool(log, "sharedMaskZora");
@@ -287,10 +331,25 @@ namespace OoTMMTracker.Models
             cfg.MmSpellFire         = GetBool(log, "spellFireMm");
             cfg.MmSpellWind         = GetBool(log, "spellWindMm");
             cfg.MmSpellLove         = GetBool(log, "spellLoveMm");
-            cfg.MmSunSong           = GetBool(log, "sunSongMm");
             cfg.MmFairyOcarina      = GetBool(log, "fairyOcarinaMm");
-            cfg.OotElegy            = GetBool(log, "elegyOot");
-            cfg.ProgressiveGoronLullaby = log.Settings.TryGetValue("progressiveGoronLullaby", out var pgl) && pgl == "progressive";
+			cfg.SongHealingOot = GetBool(log, "songHealingOot");
+			cfg.SongSoaringOot = GetBool(log, "songSoaringOot");
+			cfg.SongElegyOot = GetBool(log, "elegyOot");
+			cfg.SongAwakeningOot = GetBool(log, "songAwakeningOot");
+			cfg.SongGoronOot = GetBool(log, "songGoronOot");
+			cfg.SongZoraOot = GetBool(log, "songZoraOot");
+			cfg.SongOrderOot = GetBool(log, "songOrderOot");
+			cfg.SongSunMm = GetBool(log, "songSunMm");
+			cfg.SongZeldaLullabyMm = GetBool(log, "songZeldaLullabyMm");
+			cfg.SongSariasMm = GetBool(log, "songSariasMm");
+			cfg.SongMinuetMm = GetBool(log, "songMinuetMm");
+			cfg.SongBoleroMm = GetBool(log, "songBoleroMm");
+			cfg.SongSerenadeMm = GetBool(log, "songSerenadeMm");
+			cfg.SongRequiemMm = GetBool(log, "songRequiemMm");
+			cfg.SongNocturneMm = GetBool(log, "songNocturneMm");
+			cfg.SongPreludeMm = GetBool(log, "songPreludeMm");
+            cfg.ProgressiveGoronLullabyMm = log.Settings.TryGetValue("progressiveGoronLullabyMm", out var pgloot) && pgloot == "progressive";
+			cfg.ProgressiveGoronLullabyOot = log.Settings.TryGetValue("progressiveGoronLullabyOot", out var pglmm) && pglmm == "progressive";
             cfg.FreeScarecrowOot    = GetBool(log, "freeScarecrowOot");
             cfg.FreeScarecrowMm     = GetBool(log, "freeScarecrowMm");
             cfg.OotOcarinaButtons   = GetBool(log, "ocarinaButtonsShuffleOot");
@@ -455,6 +514,7 @@ namespace OoTMMTracker.Models
                                       && drs != "dungeonBlueWarps"
                                       && !string.IsNullOrEmpty(drs);
             cfg.SongEventsShuffleOot = cfg.HasOot && GetBool(log, "songEventsShuffleOot");
+			cfg.SongEventsShuffleMm = cfg.HasMm && GetBool(log, "songEventsShuffleMm");
             // GANON_BK Special Conditions
             if (cfg.GanonBossKey == "custom" && log.SpecialConditions.TryGetValue("GANON_BK", out var ganonBk))
             {
