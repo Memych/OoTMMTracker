@@ -732,7 +732,7 @@ namespace OoTMMTracker.Services
                     DestinationEntranceIds = new List<string> { "OOT_VALLEY_TENT" },
                     Marks = new List<MapMark>
                     {
-                        ME("Entrance.png", 555, 294, "Entrance shuffle (Gerudo Valley)", "OOT_GERUDO_VALLEY_FROM_TENT")
+                        ME("Entrance.png", 595, 265, "Entrance shuffle (Gerudo Valley)", "OOT_GERUDO_VALLEY_FROM_TENT")
                     }
                 },
                 new MapSubRegion
@@ -2597,9 +2597,9 @@ namespace OoTMMTracker.Services
 					},
                     Marks = new List<MapMark>
                     {
-                        ME("Entrance.png", 675, 134, "Entrance shuffle (Hyrule Field)", "OOT_FIELD_FROM_MARKET_ENTRANCE"),
-                        ME("Entrance.png", 470, 171, "Entrance shuffle (Pot House)", "OOT_HOUSE_POTS"),
-                        ME("Entrance.png", 224, 429, "Entrance shuffle (Market)", "OOT_MARKET_FROM_MARKET_ENTRANCE")
+                        ME("Entrance.png", 775, 198, "Entrance shuffle (Hyrule Field)", "OOT_FIELD_FROM_MARKET_ENTRANCE"),
+                        ME("Entrance.png", 544, 229, "Entrance shuffle (Pot House)", "OOT_HOUSE_POTS"),
+                        ME("Entrance.png", 145, 494, "Entrance shuffle (Market)", "OOT_MARKET_FROM_MARKET_ENTRANCE")
                     }
                 },
 				new MapSubRegion
@@ -2614,7 +2614,7 @@ namespace OoTMMTracker.Services
                     Marks = new List<MapMark>
                     {
                         ME("Entrance.png", 692, 510, "Entrance shuffle (Market)", "OOT_MARKET_FROM_TEMPLE_OF_TIME_ENTRYWAY"),
-                        ME("Entrance.png", 421, 326, "Entrance shuffle (Temple of Time)", "OOT_TEMPLE_OF_TIME")
+                        ME("Entrance.png", 494, 336, "Entrance shuffle (Temple of Time)", "OOT_TEMPLE_OF_TIME")
                     }
                 },
                 new MapSubRegion
