@@ -11718,7 +11718,7 @@ namespace OoTMMTracker.Services
 						ME("Entrance.png", 235, 98, "Entrance shuffle (Beneath the Well)", "MM_BENEATH_THE_WELL_BACK"),
 						ME("Entrance.png", 456, 406, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE"),
 						ME("Entrance.png", 464, 177, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE_INTERIOR_KEG"),
-						ME("Entrance.png", 585, 146, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE_INTERIOR_BLOCK")
+						ME("Entrance.png", 585, 146, "Entrance shuffle (Ikana Castle Interior)", "MM_IKANA_CASTLE_INTERIOR_BLOCK"),
 						ME("Entrance.png", 307, 553, "Entrance shuffle (Ikana Canyon)", "MM_IKANA_CANYON_FROM_CASTLE_GARDENS")
                     }
                 },
