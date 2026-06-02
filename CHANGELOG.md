@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.2.6
+
+### New Features
+- Added Song Events list display without spoiler log - list now shows even when no log is loaded
+- Song Events now includes "Ikana Canyon - Ghost Hut" location for Song of Healing
+
+### Improvements
+- Fixed checkbox state preservation between OoT and MM games - separate checkboxes for OoT (Adult/Child) and MM (Cursed/Cleared)
+- Checkbox states now persist when navigating between regions via entrance shuffle marks
+- Empty sub-regions (0 marks out of 0) now display as completed (green checkmark)
+- Updated completion indicators for regions and sub-regions to show as completed when all marks are collected, including empty regions
+- Enhanced Song Events UI with better error handling and null checks
+- Improved item tracker text labels visibility - added outline effect for better contrast against icons
+
+### Bug Fixes
+- Fixed application startup issue caused by Song Events initialization
+- Fixed DataGridView cell access errors in Song Events population
+- Corrected completion indicator logic for empty regions/sub-regions
+- Resolved checkbox state persistence when switching between OoT and MM via entrance navigation
+- Fixed progressive clocks display - now starts at 1 of 6 instead of 0 of 6
+- 
 ## v1.2.5
 
 ### New Features
