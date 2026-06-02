@@ -68,6 +68,9 @@ namespace OoTMMTracker.Controls
         private MapMark? _selectedMark = null;
         private Point _lastClickPoint = Point.Empty;
 
+        /// <summary>Fired when the zoom level changes.</summary>
+        public event Action? ZoomChanged;
+
         /// Fired when user right-clicks a selected mark — passes location names to mark as found.
         public event Action<IReadOnlyList<string>, string>? MarkCompleted; // (locationNames, game)
 
@@ -96,6 +99,7 @@ namespace OoTMMTracker.Controls
             _panOffset = PointF.Empty;
             ConstrainPan();
             this.Invalidate();
+            ZoomChanged?.Invoke();
         }
 
         /// <summary>User zoom multiplier (1 = fit map in panel).</summary>
@@ -148,6 +152,7 @@ namespace OoTMMTracker.Controls
             ConstrainPan();
 
             this.Invalidate();
+            ZoomChanged?.Invoke();
         }
 
         private void ConstrainPan()
