@@ -4686,9 +4686,7 @@ namespace OoTMMTracker.Services
                         M("Pot.png", 807, 339, 24, "MM Beneath The Graveyard Pot Dampe 07", "Beneath The Graveyard Pot Dampe 07"),
                         M("Pot.png", 807, 254, 24, "MM Beneath The Graveyard Pot Dampe 08", "Beneath The Graveyard Pot Dampe 08"),
                         M("Pot.png", 757, 339, 24, "MM Beneath The Graveyard Pot Dampe 09", "Beneath The Graveyard Pot Dampe 09"),
-                        M("Pot.png", 757, 254, 24, "MM Beneath The Graveyard Pot Dampe 10", "Beneath The Graveyard Pot Dampe 10"),
-						
-						ME("Entrance.png", 832, 287, "Entrance shuffle (Ikana Graveyard)", "MM_GRAVE_EXIT_NIGHT3")
+                        M("Pot.png", 757, 254, 24, "MM Beneath The Graveyard Pot Dampe 10", "Beneath The Graveyard Pot Dampe 10")
                     }
                 },
                 new MapSubRegion
