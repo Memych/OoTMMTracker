@@ -20,18 +20,6 @@ namespace OoTMMTracker.Services
                 .Replace("&", "and").Replace(",", "").Replace("-", "_")
                 .Replace("__", "_").Trim('_');
 
-        // Extracts short label from name: "Soul of Barinade (OoT)" → "Barinade"
-        private static string LabelOf(string name)
-        {
-            var s = name;
-            // Remove suffix (OoT)/(MM)
-            s = System.Text.RegularExpressions.Regex.Replace(s, @"\s*\([^)]+\)\s*$", "").Trim();
-            // Remove "Soul of the " and "Soul of "
-            if (s.StartsWith("Soul of the ")) s = s.Substring("Soul of the ".Length);
-            else if (s.StartsWith("Soul of "))  s = s.Substring("Soul of ".Length);
-            return s;
-        }
-
         // ─── Bosses ───────────────────────────────────────────────────────────────
         // One block: OoT bosses if SoulsBossOot, MM if SoulsBossMm
         // Order: Deku - Dodongo - Jabu - Forest - Fire - Water - Shadow - Spirit
@@ -69,185 +57,186 @@ namespace OoTMMTracker.Services
         }
 
         // ─── Enemy OoT ────────────────────────────────────────────────────────────
+        // Using fixed labels instead of LabelOf extraction
 
-        private static readonly string[] EnemyOot =
+        private static readonly (string name, string label)[] EnemyOot =
         {
-            "Soul of Anubis (OoT)",
-            "Soul of Armos (OoT)",
-            "Soul of Baby\nDodongos (OoT)",
-            "Soul of Beamos (OoT)",
-            "Soul of Biris/Baris (OoT)",
-            "Soul of Bubbles (OoT)",
-            "Soul of Dark\nLink (OoT)",
-            "Soul of Dead\nHands (OoT)",
-            "Soul of Deku\nBabas (OoT)",
-            "Soul of Deku\nScrubs (OoT)",
-            "Soul of Dodongos (OoT)",
-            "Soul of Flare\nDancers (OoT)",
-            "Soul of Floormasters (OoT)",
-            "Soul of Flying\nPots (OoT)",
-            "Soul of Freezards (OoT)",
-            "Soul of the Fighting\nGerudos (OoT)",
-            "Soul of Gohma\nLarvaes (OoT)",
-            "Soul of Guays (OoT)",
-            "Soul of Iron\nKnuckles (OoT)",
-            "Soul of Jabu-Jabu's\nParasites (OoT)",
-            "Soul of Keese (OoT)",
-            "Soul of Leevers (OoT)",
-            "Soul of Like\nLikes (OoT)",
-            "Soul of Lizalfos/Dinolfos (OoT)",
-            "Soul of Moblins (OoT)",
-            "Soul of Octoroks (OoT)",
-            "Soul of Peahats (OoT)",
-            "Soul of Poes (OoT)",
-            "Soul of ReDeads/Gibdos (OoT)",
-            "Soul of Shaboms (OoT)",
-            "Soul of Shell\nBlades (OoT)",
-            "Soul of Skull\nKids (OoT)",
-            "Soul of Skulltulas (OoT)",
-            "Soul of Skullwalltulas (OoT)",
-            "Soul of Spikes (OoT)",
-            "Soul of Stalchildren (OoT)",
-            "Soul of Stalfos (OoT)",
-            "Soul of Stingers (OoT)",
-            "Soul of Tailpasarans (OoT)",
-            "Soul of Tektites (OoT)",
-            "Soul of Torch\nSlugs (OoT)",
-            "Soul of Wallmasters (OoT)",
-            "Soul of Wolfos (OoT)",
+            ("Soul of Anubis (OoT)", "Anubis"),
+            ("Soul of Armos (OoT)", "Armos"),
+            ("Soul of Baby Dodongos (OoT)", "Baby\nDodongos"),
+            ("Soul of Beamos (OoT)", "Beamos"),
+            ("Soul of Biris/Baris (OoT)", "Biris/Baris"),
+            ("Soul of Bubbles (OoT)", "Bubbles"),
+            ("Soul of Dark Link (OoT)", "Dark\nLink"),
+            ("Soul of Dead Hands (OoT)", "Dead\nHands"),
+            ("Soul of Deku Babas (OoT)", "Deku\nBabas"),
+            ("Soul of Deku Scrubs (OoT)", "Deku\nScrubs"),
+            ("Soul of Dodongos (OoT)", "Dodongos"),
+            ("Soul of Flare Dancers (OoT)", "Flare\nDancers"),
+            ("Soul of Floormasters (OoT)", "Floormasters"),
+            ("Soul of Flying Pots (OoT)", "Flying\nPots"),
+            ("Soul of Freezards (OoT)", "Freezards"),
+            ("Soul of the Fighting Gerudos (OoT)", "Fighting\nGerudos"),
+            ("Soul of Gohma Larvaes (OoT)", "Gohma\nLarvaes"),
+            ("Soul of Guays (OoT)", "Guays"),
+            ("Soul of Iron Knuckles (OoT)", "Iron\nKnuckles"),
+            ("Soul of Jabu-Jabu's Parasites (OoT)", "Jabu-Jabu's\nParasites"),
+            ("Soul of Keese (OoT)", "Keese"),
+            ("Soul of Leevers (OoT)", "Leevers"),
+            ("Soul of Like-Likes (OoT)", "Like-Likes"),
+            ("Soul of Lizalfos/Dinolfos (OoT)", "Lizalfos/\nDinolfos"),
+            ("Soul of Moblins (OoT)", "Moblins"),
+            ("Soul of Octoroks (OoT)", "Octoroks"),
+            ("Soul of Peahats (OoT)", "Peahats"),
+            ("Soul of Poes (OoT)", "Poes"),
+            ("Soul of ReDeads/Gibdos (OoT)", "ReDeads/\nGibdos"),
+            ("Soul of Shaboms (OoT)", "Shaboms"),
+            ("Soul of Shell Blades (OoT)", "Shell\nBlades"),
+            ("Soul of Skull Kids (OoT)", "Skull\nKids"),
+            ("Soul of Skulltulas (OoT)", "Skulltulas"),
+            ("Soul of Skullwalltulas (OoT)", "Skullwalltulas"),
+            ("Soul of Spikes (OoT)", "Spikes"),
+            ("Soul of Stalchildren (OoT)", "Stalchildren"),
+            ("Soul of Stalfos (OoT)", "Stalfos"),
+            ("Soul of Stingers (OoT)", "Stingers"),
+            ("Soul of Tailpasarans (OoT)", "Tailpasarans"),
+            ("Soul of Tektites (OoT)", "Tektites"),
+            ("Soul of Torch Slugs (OoT)", "Torch\nSlugs"),
+            ("Soul of Wallmasters (OoT)", "Wallmasters"),
+            ("Soul of Wolfos (OoT)", "Wolfos"),
         };
 
         // ─── Enemy MM ─────────────────────────────────────────────────────────────
         // 49 enemies, alphabetical, suffix (MM)
 
-        private static readonly string[] EnemyMm =
+        private static readonly (string name, string label)[] EnemyMm =
         {
-            "Soul of Armos (MM)",
-            "Soul of Bad\nBats (MM)",
-            "Soul of Beamos (MM)",
-            "Soul of Bio\nBabas (MM)",
-            "Soul of Boes (MM)",
-            "Soul of Bubbles (MM)",
-            "Soul of Captain\nKeeta (MM)",
-            "Soul of Chuchus (MM)",
-            "Soul of Deep\nPythons (MM)",
-            "Soul of Deku\nBabas (MM)",
-            "Soul of Deku\nScrubs (MM)",
-            "Soul of Dexihands (MM)",
-            "Soul of Dodongos (MM)",
-            "Soul of Dragonflies (MM)",
-            "Soul of Eenoes (MM)",
-            "Soul of Eyegores (MM)",
-            "Soul of the Fighting\nPirates (MM)",
-            "Soul of Floormasters (MM)",
-            "Soul of Flying\nPots (MM)",
-            "Soul of Freezards (MM)",
-            "Soul of Garo (MM)",
-            "Soul of Gekkos (MM)",
-            "Soul of Gomess (MM)",
-            "Soul of Guays (MM)",
-            "Soul of Hiploops (MM)",
-            "Soul of Iron\nKnuckles (MM)",
-            "Soul of Keese (MM)",
-            "Soul of Leevers (MM)",
-            "Soul of Like\nLikes (MM)",
-            "Soul of Lizalfos/Dinolfos (MM)",
-            "Soul of Nejirons (MM)",
-            "Soul of Octoroks (MM)",
-            "Soul of Peahats (MM)",
-            "Soul of Poes (MM)",
-            "Soul of Real\nBombchu (MM)",
-            "Soul of ReDeads/Gibdos (MM)",
-            "Soul of Shell\nBlades (MM)",
-            "Soul of Skullfish (MM)",
-            "Soul of Skulltulas (MM)",
-            "Soul of Skullwalltulas (MM)",
-            "Soul of Snappers (MM)",
-            "Soul of Stalchildren (MM)",
-            "Soul of Takkuri (MM)",
-            "Soul of Tektites (MM)",
-            "Soul of Wallmasters (MM)",
-            "Soul of Warts (MM)",
-            "Soul of Wizzrobes (MM)",
-            "Soul of Wolfos (MM)",
+            ("Soul of Armos (MM)", "Armos"),
+            ("Soul of Bad Bats (MM)", "Bad\nBats"),
+            ("Soul of Beamos (MM)", "Beamos"),
+            ("Soul of Bio Babas (MM)", "Bio\nBabas"),
+            ("Soul of Boes (MM)", "Boes"),
+            ("Soul of Bubbles (MM)", "Bubbles"),
+            ("Soul of Captain Keeta (MM)", "Captain\nKeeta"),
+            ("Soul of Chuchus (MM)", "Chuchus"),
+            ("Soul of Deep Pythons (MM)", "Deep\nPythons"),
+            ("Soul of Deku Babas (MM)", "Deku\nBabas"),
+            ("Soul of Deku Scrubs (MM)", "Deku\nScrubs"),
+            ("Soul of Dexihands (MM)", "Dexihands"),
+            ("Soul of Dodongos (MM)", "Dodongos"),
+            ("Soul of Dragonflies (MM)", "Dragonflies"),
+            ("Soul of Eenoes (MM)", "Eenoes"),
+            ("Soul of Eyegores (MM)", "Eyegores"),
+            ("Soul of the Fighting Pirates (MM)", "Fighting\nPirates"),
+            ("Soul of Floormasters (MM)", "Floormasters"),
+            ("Soul of Flying Pots (MM)", "Flying\nPots"),
+            ("Soul of Freezards (MM)", "Freezards"),
+            ("Soul of Garo (MM)", "Garo"),
+            ("Soul of Gekkos (MM)", "Gekkos"),
+            ("Soul of Gomess (MM)", "Gomess"),
+            ("Soul of Guays (MM)", "Guays"),
+            ("Soul of Hiploops (MM)", "Hiploops"),
+            ("Soul of Iron Knuckles (MM)", "Iron\nKnuckles"),
+            ("Soul of Keese (MM)", "Keese"),
+            ("Soul of Leevers (MM)", "Leevers"),
+            ("Soul of Like-Likes (MM)", "Like-Likes"),
+            ("Soul of Lizalfos/Dinolfos (MM)", "Lizalfos/\nDinolfos"),
+            ("Soul of Nejirons (MM)", "Nejirons"),
+            ("Soul of Octoroks (MM)", "Octoroks"),
+            ("Soul of Peahats (MM)", "Peahats"),
+            ("Soul of Poes (MM)", "Poes"),
+            ("Soul of Real Bombchu (MM)", "Real\nBombchu"),
+            ("Soul of ReDeads/Gibdos (MM)", "ReDeads/\nGibdos"),
+            ("Soul of Shell Blades (MM)", "Shell\nBlades"),
+            ("Soul of Skullfish (MM)", "Skullfish"),
+            ("Soul of Skulltulas (MM)", "Skulltulas"),
+            ("Soul of Skullwalltulas (MM)", "Skullwalltulas"),
+            ("Soul of Snappers (MM)", "Snappers"),
+            ("Soul of Stalchildren (MM)", "Stalchildren"),
+            ("Soul of Takkuri (MM)", "Takkuri"),
+            ("Soul of Tektites (MM)", "Tektites"),
+            ("Soul of Wallmasters (MM)", "Wallmasters"),
+            ("Soul of Warts (MM)", "Warts"),
+            ("Soul of Wizzrobes (MM)", "Wizzrobes"),
+            ("Soul of Wolfos (MM)", "Wolfos"),
         };
 
         // ─── Enemy Shared ─────────────────────────────────────────────────────────
 
-        private static readonly string[] EnemyShared =
+        private static readonly (string name, string label)[] EnemyShared =
         {
-            "Soul of Anubis",
-            "Soul of Armos",
-            "Soul of Baby\nDodongos",
-            "Soul of Bad\nBats",
-            "Soul of Beamos",
-            "Soul of Bio\nBabas",
-            "Soul of Biris/Baris",
-            "Soul of Boes",
-            "Soul of Bubbles",
-            "Soul of Captain\nKeeta",
-            "Soul of Chuchus",
-            "Soul of Dark\nLink",
-            "Soul of Dead\nHands",
-            "Soul of Deep\nPythons",
-            "Soul of Deku\nBabas",
-            "Soul of Deku\nScrubs",
-            "Soul of Dexihands",
-            "Soul of Dodongos",
-            "Soul of Dragonflies",
-            "Soul of Eenoes",
-            "Soul of Eyegores",
-            "Soul of Fighting\nThieves",
-            "Soul of Flare\nDancers",
-            "Soul of Floormasters",
-            "Soul of Flying\nPots",
-            "Soul of Freezards",
-            "Soul of Garo",
-            "Soul of Gekkos",
-            "Soul of Gohma\nLarvaes",
-            "Soul of Gomess",
-            "Soul of Guays",
-            "Soul of Hiploops",
-            "Soul of Iron\nKnuckles",
-            "Soul of Jabu-Jabu's\nParasites",
-            "Soul of Keese",
-            "Soul of Leevers",
-            "Soul of Like\nLikes",
-            "Soul of Lizalfos/Dinolfos",
-            "Soul of Moblins",
-            "Soul of Nejirons",
-            "Soul of Octoroks",
-            "Soul of Peahats",
-            "Soul of Poes",
-            "Soul of Real\nBombchu",
-            "Soul of ReDeads/Gibdos",
-            "Soul of Shaboms",
-            "Soul of Shell\nBlades",
-            "Soul of Skull\nKids",
-            "Soul of Skullfish",
-            "Soul of Skulltulas",
-            "Soul of Skullwalltulas",
-            "Soul of Snappers",
-            "Soul of Spikes",
-            "Soul of Stalchildren",
-            "Soul of Stalfos",
-            "Soul of Stingers",
-            "Soul of Tailpasarans",
-            "Soul of Takkuri",
-            "Soul of Tektites",
-            "Soul of Torch\nSlugs",
-            "Soul of Wallmasters",
-            "Soul of Warts",
-            "Soul of Wizzrobes",
-            "Soul of Wolfos",
+            ("Soul of Anubis", "Anubis"),
+            ("Soul of Armos", "Armos"),
+            ("Soul of Baby Dodongos", "Baby\nDodongos"),
+            ("Soul of Bad Bats", "Bad\nBats"),
+            ("Soul of Beamos", "Beamos"),
+            ("Soul of Bio Babas", "Bio\nBabas"),
+            ("Soul of Biris/Baris", "Biris/Baris"),
+            ("Soul of Boes", "Boes"),
+            ("Soul of Bubbles", "Bubbles"),
+            ("Soul of Captain Keeta", "Captain\nKeeta"),
+            ("Soul of Chuchus", "Chuchus"),
+            ("Soul of Dark Link", "Dark\nLink"),
+            ("Soul of Dead Hands", "Dead\nHands"),
+            ("Soul of Deep Pythons", "Deep\nPythons"),
+            ("Soul of Deku Babas", "Deku\nBabas"),
+            ("Soul of Deku Scrubs", "Deku\nScrubs"),
+            ("Soul of Dexihands", "Dexihands"),
+            ("Soul of Dodongos", "Dodongos"),
+            ("Soul of Dragonflies", "Dragonflies"),
+            ("Soul of Eenoes", "Eenoes"),
+            ("Soul of Eyegores", "Eyegores"),
+            ("Soul of Fighting Thieves", "Fighting\nThieves"),
+            ("Soul of Flare Dancers", "Flare\nDancers"),
+            ("Soul of Floormasters", "Floormasters"),
+            ("Soul of Flying Pots", "Flying\nPots"),
+            ("Soul of Freezards", "Freezards"),
+            ("Soul of Garo", "Garo"),
+            ("Soul of Gekkos", "Gekkos"),
+            ("Soul of Gohma Larvaes", "Gohma\nLarvaes"),
+            ("Soul of Gomess", "Gomess"),
+            ("Soul of Guays", "Guays"),
+            ("Soul of Hiploops", "Hiploops"),
+            ("Soul of Iron Knuckles", "Iron\nKnuckles"),
+            ("Soul of Jabu-Jabu's Parasites", "Jabu-Jabu's\nParasites"),
+            ("Soul of Keese", "Keese"),
+            ("Soul of Leevers", "Leevers"),
+            ("Soul of Like-Likes", "Like-Likes"),
+            ("Soul of Lizalfos/Dinolfos", "Lizalfos/\nDinolfos"),
+            ("Soul of Moblins", "Moblins"),
+            ("Soul of Nejirons", "Nejirons"),
+            ("Soul of Octoroks", "Octoroks"),
+            ("Soul of Peahats", "Peahats"),
+            ("Soul of Poes", "Poes"),
+            ("Soul of Real Bombchu", "Real\nBombchu"),
+            ("Soul of ReDeads/Gibdos", "ReDeads/\nGibdos"),
+            ("Soul of Shaboms", "Shaboms"),
+            ("Soul of Shell Blades", "Shell\nBlades"),
+            ("Soul of Skull Kids", "Skull\nKids"),
+            ("Soul of Skullfish", "Skullfish"),
+            ("Soul of Skulltulas", "Skulltulas"),
+            ("Soul of Skullwalltulas", "Skullwalltulas"),
+            ("Soul of Snappers", "Snappers"),
+            ("Soul of Spikes", "Spikes"),
+            ("Soul of Stalchildren", "Stalchildren"),
+            ("Soul of Stalfos", "Stalfos"),
+            ("Soul of Stingers", "Stingers"),
+            ("Soul of Tailpasarans", "Tailpasarans"),
+            ("Soul of Takkuri", "Takkuri"),
+            ("Soul of Tektites", "Tektites"),
+            ("Soul of Torch Slugs", "Torch\nSlugs"),
+            ("Soul of Wallmasters", "Wallmasters"),
+            ("Soul of Warts", "Warts"),
+            ("Soul of Wizzrobes", "Wizzrobes"),
+            ("Soul of Wolfos", "Wolfos"),
         };
 
         public static List<TrackerItem> GetEnemySoulsOot(TrackerConfig cfg)
         {
             if (!cfg.SoulsEnemyOot || cfg.SharedSoulsEnemy) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in EnemyOot)
-                items.Add(S(ToId(name), name, "souls/enemy.png", LabelOf(name)));
+            foreach (var (name, label) in EnemyOot)
+                items.Add(S(ToId(name), name, "souls/enemy.png", label));
             return items;
         }
 
@@ -255,8 +244,8 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SoulsEnemyMm || cfg.SharedSoulsEnemy) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in EnemyMm)
-                items.Add(S(ToId(name), name, "souls/enemy.png", LabelOf(name)));
+            foreach (var (name, label) in EnemyMm)
+                items.Add(S(ToId(name), name, "souls/enemy.png", label));
             return items;
         }
 
@@ -264,197 +253,197 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SharedSoulsEnemy) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in EnemyShared)
-                items.Add(S(ToId(name), name, "souls/enemy.png", LabelOf(name)));
+            foreach (var (name, label) in EnemyShared)
+                items.Add(S(ToId(name), name, "souls/enemy.png", label));
             return items;
         }
 
         // ─── NPC OoT ──────────────────────────────────────────────────────────────
 
-        private static readonly string[] NpcOot =
+        private static readonly (string name, string label)[] NpcOot =
         {
-            "Soul of the Astronomer (OoT)",
-            "Soul of Bazaar\nShopkeeper (OoT)",
-            "Soul of the Bean\nSalesman (OoT)",
-            "Soul of the Beggar (OoT)",
-            "Soul of Biggoron (OoT)",
-            "Soul of Bombchu\nShopkeeper (OoT)",
-            "Soul of Bombchu\nBowling Lady (OoT)",
-            "Soul of Carpenters (OoT)",
-            "Soul of the Carpet\nMan (OoT)",
-            "Soul of Chest Game\nOwner (OoT)",
-            "Soul of Goron\nChild (OoT)",
-            "Soul of Composer Bros. (OoT)",
-            "Soul of Cucco\nLady (OoT)",
-            "Soul of Dampe (OoT)",
-            "Soul of Darunia (OoT)",
-            "Soul of the Dog\nLady (OoT)",
-            "Soul of Fishing Pond\nOwner (OoT)",
-            "Soul of the Patrolling\nGerudos (OoT)",
-            "Soul of Goron (OoT)",
-            "Soul of Goron\nShopkeeper (OoT)",
-            "Soul of Graveyard\nKid (OoT)",
-            "Soul of Guru-Guru (OoT)",
-            "Soul of the Citizens (OoT)",
-            "Soul of Hylian\nGuard (OoT)",
-            "Soul of Ingo (OoT)",
-            "Soul of King\nZora (OoT)",
-            "Soul of Kokiri (OoT)",
-            "Soul of Kokiri\nShopkeeper (OoT)",
-            "Soul of the Scientist (OoT)",
-            "Soul of Honey & Darling (OoT)",
-            "Soul of Malon (OoT)",
-            "Soul of Medigoron (OoT)",
-            "Soul of Mido (OoT)",
-            "Soul of the Old\nHag (OoT)",
-            "Soul of Poe\nCollector (OoT)",
-            "Soul of Potion\nShopkeeper (OoT)",
-            "Soul of the Punk\nKid (OoT)",
-            "Soul of the Rooftop\nMan (OoT)",
-            "Soul of Ruto (OoT)",
-            "Soul of Saria (OoT)",
-            "Soul of Sheik (OoT)",
-            "Soul of Shooting Gallery\nOwner (OoT)",
-            "Soul of Talon (OoT)",
-            "Soul of Zelda (OoT)",
-            "Soul of Zora (OoT)",
-            "Soul of Zora\nShopkeeper (OoT)",
+            ("Soul of the Astronomer (OoT)", "Astronomer"),
+            ("Soul of Bazaar Shopkeeper (OoT)", "Bazaar\nShopkeeper"),
+            ("Soul of the Bean Salesman (OoT)", "Bean\nSalesman"),
+            ("Soul of the Beggar (OoT)", "Beggar"),
+            ("Soul of Biggoron (OoT)", "Biggoron"),
+            ("Soul of Bombchu Shopkeeper (OoT)", "Bombchu\nShopkeeper"),
+            ("Soul of Bombchu Bowling Lady (OoT)", "Bombchu\nBowling Lady"),
+            ("Soul of Carpenters (OoT)", "Carpenters"),
+            ("Soul of the Carpet Man (OoT)", "Carpet\nMan"),
+            ("Soul of Chest Game Owner (OoT)", "Chest Game\nOwner"),
+            ("Soul of Goron Child (OoT)", "Child\nGoron"),
+            ("Soul of Composer Bros. (OoT)", "Composer\nBros."),
+            ("Soul of Cucco Lady (OoT)", "Cucco\nLady"),
+            ("Soul of Dampe (OoT)", "Dampe"),
+            ("Soul of Darunia (OoT)", "Darunia"),
+            ("Soul of the Dog Lady (OoT)", "Dog\nLady"),
+            ("Soul of Fishing Pond Owner (OoT)", "Fishing Pond\nOwner"),
+            ("Soul of Goron (OoT)", "Goron"),
+            ("Soul of Goron Shopkeeper (OoT)", "Goron\nShopkeeper"),
+            ("Soul of Graveyard Kid (OoT)", "Graveyard\nKid"),
+            ("Soul of Guru-Guru (OoT)", "Guru-Guru"),
+            ("Soul of the Citizens (OoT)", "Citizens"),
+            ("Soul of Hylian Guard (OoT)", "Hylian\nGuard"),
+            ("Soul of Ingo (OoT)", "Ingo"),
+            ("Soul of King Zora (OoT)", "King\nZora"),
+            ("Soul of Kokiri (OoT)", "Kokiri"),
+            ("Soul of Kokiri Shopkeeper (OoT)", "Kokiri\nShopkeeper"),
+            ("Soul of the Scientist (OoT)", "Scientist"),
+            ("Soul of Honey & Darling (OoT)", "Honey &\nDarling"),
+            ("Soul of Malon (OoT)", "Malon"),
+            ("Soul of Medigoron (OoT)", "Medigoron"),
+            ("Soul of Mido (OoT)", "Mido"),
+            ("Soul of the Old Hag (OoT)", "Old\nHag"),
+            ("Soul of the Patrolling Gerudos (OoT)", "Patrolling\nGerudos"),
+            ("Soul of Poe Collector (OoT)", "Poe\nCollector"),
+            ("Soul of Potion Shopkeeper (OoT)", "Potion\nShopkeeper"),
+            ("Soul of the Punk Kid (OoT)", "Punk\nKid"),
+            ("Soul of the Rooftop Man (OoT)", "Rooftop\nMan"),
+            ("Soul of Ruto (OoT)", "Ruto"),
+            ("Soul of Saria (OoT)", "Saria"),
+            ("Soul of Sheik (OoT)", "Sheik"),
+            ("Soul of Shooting Gallery Owner (OoT)", "Shooting\nGallery Owner"),
+            ("Soul of Talon (OoT)", "Talon"),
+            ("Soul of Zelda (OoT)", "Zelda"),
+            ("Soul of Zora (OoT)", "Zora"),
+            ("Soul of Zora Shopkeeper (OoT)", "Zora\nShopkeeper"),
         };
 
         // ─── NPC MM ───────────────────────────────────────────────────────────────
 
-        private static readonly string[] NpcMm =
+        private static readonly (string name, string label)[] NpcMm =
         {
-            "Soul of Anju (MM)",
-            "Soul of Anju's\nGrandmother (MM)",
-            "Soul of Astronomer (MM)",
-            "Soul of the Banker (MM)",
-            "Soul of the Beans\nSalesman (MM)",
-            "Soul of Mr. Barten (MM)",
-            "Soul of Biggoron (MM)",
-            "Soul of Blacksmiths (MM)",
-            "Soul of the Bomb Shop\nOwner (MM)",
-            "Soul of Bombers (MM)",
-            "Soul of Carpenters (MM)",
-            "Soul of Chest Game\nLady (MM)",
-            "Soul of Citizens (MM)",
-            "Soul of Composer Bros. (MM)",
-            "Soul of Dampe (MM)",
-            "Soul of the Deku\nButler (MM)",
-            "Soul of the Deku\nKing (MM)",
-            "Soul of the Deku\nPrincess (MM)",
-            "Soul of Dog\nLady (MM)",
-            "Soul of the Fisherman (MM)",
-            "Soul of Ghost Hut\nOwner (MM)",
-            "Soul of Gorman & Bros. (MM)",
-            "Soul of Gorons (MM)",
-            "Soul of the Goron\nBaby (MM)",
-            "Soul of the Goron\nElder (MM)",
-            "Soul of the Goron\nShopkeeper (MM)",
-            "Soul of Grog (MM)",
-            "Soul of Guru-Guru (MM)",
-            "Soul of Honey & Darling (MM)",
-            "Soul of Kafei (MM)",
-            "Soul of Keaton (MM)",
-            "Soul of Keg Trial\nGoron (MM)",
-            "Soul of Koume & Kotake (MM)",
-            "Soul of Lulu (MM)",
-            "Soul of Madame\nAroma (MM)",
-            "Soul of Mayor\nDotour (MM)",
-            "Soul of Moon\nChildren (MM)",
-            "Soul of Part-Timer (MM)",
-            "Soul of the Patrolling Pirates\nand their Chief (MM)",
-            "Soul of Playground\nScrubs (MM)",
-            "Soul of Romani/Cremia (MM)",
-            "Soul of the Scientist (MM)",
-            "Soul of Swamp Archery\nOwner (MM)",
-            "Soul of Swordsman (MM)",
-            "Soul of Tingle (MM)",
-            "Soul of Toilet\nHand (MM)",
-            "Soul of Tourist Center\nOwner (MM)",
-            "Soul of Toto (MM)",
-            "Soul of Town Archery\nOwner (MM)",
-            "Soul of Trading Post\nOwner (MM)",
-            "Soul of Zoras (MM)",
-            "Soul of the Zora\nMusicians (MM)",
-            "Soul of the Zora\nShopkeeper (MM)",
+            ("Soul of Anju (MM)", "Anju"),
+            ("Soul of Anju's Grandmother (MM)", "Anju's\nGrandmother"),
+            ("Soul of Astronomer (MM)", "Astronomer"),
+            ("Soul of the Goron Baby (MM)", "Baby\nGoron"),
+            ("Soul of the Banker (MM)", "Banker"),
+            ("Soul of the Beans Salesman (MM)", "Bean\nSalesman"),
+            ("Soul of Mr. Barten (MM)", "Mr. Barten"),
+            ("Soul of Biggoron (MM)", "Biggoron"),
+            ("Soul of Blacksmiths (MM)", "Blacksmiths"),
+            ("Soul of the Bomb Shop Owner (MM)", "Bomb Shop\nOwner"),
+            ("Soul of Bombers (MM)", "Bombers"),
+            ("Soul of Carpenters (MM)", "Carpenters"),
+            ("Soul of Chest Game Lady (MM)", "Chest Game\nLady"),
+            ("Soul of Citizens (MM)", "Citizens"),
+            ("Soul of Composer Bros. (MM)", "Composer\nBros."),
+            ("Soul of Dampe (MM)", "Dampe"),
+            ("Soul of the Deku Butler (MM)", "Deku\nButler"),
+            ("Soul of the Deku King (MM)", "Deku\nKing"),
+            ("Soul of the Deku Princess (MM)", "Deku\nPrincess"),
+            ("Soul of Dog Lady (MM)", "Dog\nLady"),
+            ("Soul of the Fisherman (MM)", "Fisherman"),
+            ("Soul of Ghost Hut Owner (MM)", "Ghost Hut\nOwner"),
+            ("Soul of Gorman & Bros. (MM)", "Gorman &\nBros."),
+            ("Soul of Gorons (MM)", "Gorons"),
+            ("Soul of the Goron Elder (MM)", "Goron\nElder"),
+            ("Soul of the Goron Shopkeeper (MM)", "Goron\nShopkeeper"),
+            ("Soul of Grog (MM)", "Grog"),
+            ("Soul of Guru-Guru (MM)", "Guru-Guru"),
+            ("Soul of Honey & Darling (MM)", "Honey &\nDarling"),
+            ("Soul of Kafei (MM)", "Kafei"),
+            ("Soul of Keaton (MM)", "Keaton"),
+            ("Soul of Keg Trial Goron (MM)", "Keg Trial\nGoron"),
+            ("Soul of Koume & Kotake (MM)", "Koume &\nKotake"),
+            ("Soul of Lulu (MM)", "Lulu"),
+            ("Soul of Madame Aroma (MM)", "Madame\nAroma"),
+            ("Soul of Mayor Dotour (MM)", "Mayor\nDotour"),
+            ("Soul of Moon Children (MM)", "Moon\nChildren"),
+            ("Soul of Part-Timer (MM)", "Part-Timer"),
+            ("Soul of the Patrolling Pirates and their Chief (MM)", "Patrolling\nPirates"),
+            ("Soul of Playground Scrubs (MM)", "Playground\nScrubs"),
+            ("Soul of Romani/Cremia (MM)", "Romani/\nCremia"),
+            ("Soul of the Scientist (MM)", "Scientist"),
+            ("Soul of Swamp Archery Owner (MM)", "Swamp Archery\nOwner"),
+            ("Soul of Swordsman (MM)", "Swordsman"),
+            ("Soul of Tingle (MM)", "Tingle"),
+            ("Soul of Toilet Hand (MM)", "Toilet\nHand"),
+            ("Soul of Tourist Center Owner (MM)", "Tourist Center\nOwner"),
+            ("Soul of Toto (MM)", "Toto"),
+            ("Soul of Town Archery Owner (MM)", "Town Archery\nOwner"),
+            ("Soul of Trading Post Owner (MM)", "Trading Post\nOwner"),
+            ("Soul of Zoras (MM)", "Zoras"),
+            ("Soul of the Zora Musicians (MM)", "Zora\nMusicians"),
+            ("Soul of the Zora Shopkeeper (MM)", "Zora\nShopkeeper"),
         };
 
         // ─── NPC Shared ───────────────────────────────────────────────────────────
 
-        private static readonly string[] NpcShared =
+        private static readonly (string name, string label)[] NpcShared =
         {
-            "Soul of Astronomer",
-            "Soul of the Bazaar/Swamp\nArchery Owner",
-            "Soul of Bean\nSalesman",
-            "Soul of the Beggar/Banker",
-            "Soul of Biggoron",
-            "Soul of Blacksmiths",
-            "Soul of Tourist Center\nOwner",
-            "Soul of the Bombchu/Bomb\nShop Owner",
-            "Soul of Bombchu Bowling/\nChest Game Lady",
-            "Soul of Carpenters",
-            "Soul of the Carpet\nMan/Swordsman",
-            "Soul of the Chest Game\nOwner/Fisherman",
-            "Soul of the Goron\nChild/Baby",
-            "Soul of Composer Bros.",
-            "Soul of Cucco\nLady/Anju",
-            "Soul of Dampe",
-            "Soul of Darunia",
-            "Soul of Deku\nButler",
-            "Soul of Deku\nKing",
-            "Soul of Deku\nPrincess",
-            "Soul of Dog\nLady",
-            "Soul of Fishing Pond/\nTrading Post Owner",
-            "Soul of the Patrolling Thieves\nand their Chief",
-            "Soul of Goron\nElder",
-            "Soul of Gorons",
-            "Soul of Goron\nShopkeeper",
-            "Soul of the Graveyard\nKid/Bombers",
-            "Soul of Guru-Guru",
-            "Soul of Citizens",
-            "Soul of Hylian\nGuard",
-            "Soul of Ingo/Gorman & Bros.",
-            "Soul of Kafei",
-            "Soul of Keaton",
-            "Soul of King\nZora",
-            "Soul of Kokiri",
-            "Soul of Kokiri\nShopkeeper",
-            "Soul of Koume & Kotake",
-            "Soul of the Scientist",
-            "Soul of Honey & Darling",
-            "Soul of Madame\nAroma",
-            "Soul of Malon/Romani/Cremia",
-            "Soul of Mayor\nDotour",
-            "Soul of Medigoron/Keg Trial\nGoron",
-            "Soul of Mido",
-            "Soul of Moon\nChildren",
-            "Soul of the Old Hag/Anju's\nGrandmother",
-            "Soul of Playground\nScrubs",
-            "Soul of Poe Collector/\nGhost Hut Owner",
-            "Soul of Potion\nShopkeeper",
-            "Soul of the Punk Kid/\nGrog",
-            "Soul of Rooftop Man/\nPart-Timer",
-            "Soul of Ruto/Lulu",
-            "Soul of Saria",
-            "Soul of Sheik",
-            "Soul of the Shooting Gallery/\nTown Archery Owner",
-            "Soul of Talon/\nMr. Barten",
-            "Soul of Tingle",
-            "Soul of Toilet\nHand",
-            "Soul of Toto",
-            "Soul of Zelda",
-            "Soul of the Zora\nMusicians",
-            "Soul of Zoras",
-            "Soul of the Zora\nShopkeeper",
+            ("Soul of Astronomer", "Astronomer"),
+            ("Soul of the Bazaar/Swamp Archery Owner", "Bazaar/Swamp\nArchery Owner"),
+            ("Soul of Bean Salesman", "Bean\nSalesman"),
+            ("Soul of the Beggar/Banker", "Beggar/\nBanker"),
+            ("Soul of Biggoron", "Biggoron"),
+            ("Soul of Blacksmiths", "Blacksmiths"),
+            ("Soul of Tourist Center Owner", "Tourist Center\nOwner"),
+            ("Soul of the Bombchu/Bomb Shop Owner", "Bombchu/Bomb\nShop Owner"),
+            ("Soul of Bombchu Bowling/Chest Game Lady", "Bombchu Bowling/\nChest Game Lady"),
+            ("Soul of Carpenters", "Carpenters"),
+            ("Soul of the Carpet Man/Swordsman", "Carpet Man/\nSwordsman"),
+            ("Soul of the Chest Game Owner/Fisherman", "Chest Game Owner/\nFisherman"),
+            ("Soul of the Goron Child/Baby", "Child/Baby\nGoron"),
+            ("Soul of Composer Bros.", "Composer\nBros."),
+            ("Soul of Cucco Lady/Anju", "Cucco Lady/\nAnju"),
+            ("Soul of Dampe", "Dampe"),
+            ("Soul of Darunia", "Darunia"),
+            ("Soul of Deku Butler", "Deku\nButler"),
+            ("Soul of Deku King", "Deku\nKing"),
+            ("Soul of Deku Princess", "Deku\nPrincess"),
+            ("Soul of Dog Lady", "Dog\nLady"),
+            ("Soul of Fishing Pond/Trading Post Owner", "Fishing Pond/\nTrading Post Owner"),
+            ("Soul of Goron Elder", "Goron\nElder"),
+            ("Soul of Gorons", "Gorons"),
+            ("Soul of Goron Shopkeeper", "Goron\nShopkeeper"),
+            ("Soul of Graveyard Kid/Bombers", "Graveyard Kid/\nBombers"),
+            ("Soul of Guru-Guru", "Guru-Guru"),
+            ("Soul of Citizens", "Citizens"),
+            ("Soul of Hylian Guard", "Hylian\nGuard"),
+            ("Soul of Ingo/Gorman & Bros.", "Ingo/Gorman &\nBros."),
+            ("Soul of Kafei", "Kafei"),
+            ("Soul of Keaton", "Keaton"),
+            ("Soul of King Zora", "King\nZora"),
+            ("Soul of Kokiri", "Kokiri"),
+            ("Soul of Kokiri Shopkeeper", "Kokiri\nShopkeeper"),
+            ("Soul of Koume & Kotake", "Koume &\nKotake"),
+            ("Soul of the Scientist", "Scientist"),
+            ("Soul of Honey & Darling", "Honey &\nDarling"),
+            ("Soul of Madame Aroma", "Madame\nAroma"),
+            ("Soul of Malon/Romani/Cremia", "Malon/Romani/\nCremia"),
+            ("Soul of Mayor Dotour", "Mayor\nDotour"),
+            ("Soul of Medigoron/Keg Trial Goron", "Medigoron/Keg\nTrial Goron"),
+            ("Soul of Mido", "Mido"),
+            ("Soul of Moon Children", "Moon\nChildren"),
+            ("Soul of Old Hag/Anju's Grandmother", "Old Hag/Anju's\nGrandmother"),
+            ("Soul of the Patrolling Thieves and their Chief", "Patrolling\nThieves"),
+            ("Soul of Playground Scrubs", "Playground\nScrubs"),
+            ("Soul of Poe Collector/Ghost Hut Owner", "Poe Collector/\nGhost Hut Owner"),
+            ("Soul of Potion Shopkeeper", "Potion\nShopkeeper"),
+            ("Soul of Punk Kid/Grog", "Punk Kid/\nGrog"),
+            ("Soul of Rooftop Man/Part-Timer", "Rooftop Man/\nPart-Timer"),
+            ("Soul of Ruto/Lulu", "Ruto/Lulu"),
+            ("Soul of Saria", "Saria"),
+            ("Soul of Sheik", "Sheik"),
+            ("Soul of Shooting Gallery/Town Archery Owner", "Shooting Gallery/\nTown Archery Owner"),
+            ("Soul of Talon/Mr. Barten", "Talon/\nMr. Barten"),
+            ("Soul of Tingle", "Tingle"),
+            ("Soul of Toilet Hand", "Toilet\nHand"),
+            ("Soul of Toto", "Toto"),
+            ("Soul of Zelda", "Zelda"),
+            ("Soul of Zora Musicians", "Zora\nMusicians"),
+            ("Soul of Zoras", "Zoras"),
+            ("Soul of Zora Shopkeeper", "Zora\nShopkeeper"),
         };
 
         public static List<TrackerItem> GetNpcSoulsOot(TrackerConfig cfg)
         {
             if (!cfg.SoulsNpcOot || cfg.SharedSoulsNpc) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in NpcOot)
-                items.Add(S(ToId(name), name, "souls/npc.png", LabelOf(name)));
+            foreach (var (name, label) in NpcOot)
+                items.Add(S(ToId(name), name, "souls/npc.png", label));
             return items;
         }
 
@@ -462,8 +451,8 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SoulsNpcMm || cfg.SharedSoulsNpc) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in NpcMm)
-                items.Add(S(ToId(name), name, "souls/npc.png", LabelOf(name)));
+            foreach (var (name, label) in NpcMm)
+                items.Add(S(ToId(name), name, "souls/npc.png", label));
             return items;
         }
 
@@ -471,26 +460,28 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SharedSoulsNpc) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in NpcShared)
-                items.Add(S(ToId(name), name, "souls/npc.png", LabelOf(name)));
+            foreach (var (name, label) in NpcShared)
+                items.Add(S(ToId(name), name, "souls/npc.png", label));
             return items;
         }
 
         // ─── Animal ───────────────────────────────────────────────────────────────
 
-        private static readonly string[] AnimalOot =
-            { "Soul of Butterflies (OoT)", "Soul of Cows (OoT)", "Soul of Cuccos (OoT)", "Soul of Dogs (OoT)" };
-        private static readonly string[] AnimalMm =
-            { "Soul of Butterflies (MM)", "Soul of Cows (MM)", "Soul of Cuccos (MM)", "Soul of Dogs (MM)" };
-        private static readonly string[] AnimalShared =
-            { "Soul of Butterflies", "Soul of Cows", "Soul of Cuccos", "Soul of Dogs" };
+        private static readonly (string name, string label)[] AnimalOot =
+            { ("Soul of Butterflies (OoT)", "Butterflies"), ("Soul of Cows (OoT)", "Cows"), ("Soul of Cuccos (OoT)", "Cuccos"), ("Soul of Dogs (OoT)", "Dogs") };
+        
+        private static readonly (string name, string label)[] AnimalMm =
+            { ("Soul of Butterflies (MM)", "Butterflies"), ("Soul of Cows (MM)", "Cows"), ("Soul of Cuccos (MM)", "Cuccos"), ("Soul of Dogs (MM)", "Dogs") };
+        
+        private static readonly (string name, string label)[] AnimalShared =
+            { ("Soul of Butterflies", "Butterflies"), ("Soul of Cows", "Cows"), ("Soul of Cuccos", "Cuccos"), ("Soul of Dogs", "Dogs") };
 
         public static List<TrackerItem> GetAnimalSoulsOot(TrackerConfig cfg)
         {
             if (!cfg.SoulsAnimalOot || cfg.SharedSoulsAnimal) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in AnimalOot)
-                items.Add(S(ToId(name), name, "souls/animal.png", LabelOf(name)));
+            foreach (var (name, label) in AnimalOot)
+                items.Add(S(ToId(name), name, "souls/animal.png", label));
             return items;
         }
 
@@ -498,8 +489,8 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SoulsAnimalMm || cfg.SharedSoulsAnimal) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in AnimalMm)
-                items.Add(S(ToId(name), name, "souls/animal.png", LabelOf(name)));
+            foreach (var (name, label) in AnimalMm)
+                items.Add(S(ToId(name), name, "souls/animal.png", label));
             return items;
         }
 
@@ -507,26 +498,28 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SharedSoulsAnimal) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in AnimalShared)
-                items.Add(S(ToId(name), name, "souls/animal.png", LabelOf(name)));
+            foreach (var (name, label) in AnimalShared)
+                items.Add(S(ToId(name), name, "souls/animal.png", label));
             return items;
         }
 
         // ─── Misc ─────────────────────────────────────────────────────────────────
 
-        private static readonly string[] MiscOot =
-            { "Soul of Business\nScrubs (OoT)", "Soul of Gold\nSkulltulas (OoT)" };
-        private static readonly string[] MiscMm =
-            { "Soul of Business\nScrubs (MM)", "Soul of Gold\nSkulltulas (MM)" };
-        private static readonly string[] MiscShared =
-            { "Soul of Business\nScrubs", "Soul of Gold\nSkulltulas" };
+        private static readonly (string name, string label)[] MiscOot =
+            { ("Soul of Business Scrubs (OoT)", "Business\nScrubs"), ("Soul of Gold Skulltulas (OoT)", "Gold\nSkulltulas") };
+        
+        private static readonly (string name, string label)[] MiscMm =
+            { ("Soul of Business Scrubs (MM)", "Business\nScrubs"), ("Soul of Gold Skulltulas (MM)", "Gold\nSkulltulas") };
+        
+        private static readonly (string name, string label)[] MiscShared =
+            { ("Soul of Business Scrubs", "Business\nScrubs"), ("Soul of Gold Skulltulas", "Gold\nSkulltulas") };
 
         public static List<TrackerItem> GetMiscSoulsOot(TrackerConfig cfg)
         {
             if (!cfg.SoulsMiscOot || cfg.SharedSoulsMisc) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in MiscOot)
-                items.Add(S(ToId(name), name, "souls/misc.png", LabelOf(name)));
+            foreach (var (name, label) in MiscOot)
+                items.Add(S(ToId(name), name, "souls/misc.png", label));
             return items;
         }
 
@@ -534,8 +527,8 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SoulsMiscMm || cfg.SharedSoulsMisc) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in MiscMm)
-                items.Add(S(ToId(name), name, "souls/misc.png", LabelOf(name)));
+            foreach (var (name, label) in MiscMm)
+                items.Add(S(ToId(name), name, "souls/misc.png", label));
             return items;
         }
 
@@ -543,8 +536,8 @@ namespace OoTMMTracker.Services
         {
             if (!cfg.SharedSoulsMisc) return new();
             var items = new List<TrackerItem>();
-            foreach (var name in MiscShared)
-                items.Add(S(ToId(name), name, "souls/misc.png", LabelOf(name)));
+            foreach (var (name, label) in MiscShared)
+                items.Add(S(ToId(name), name, "souls/misc.png", label));
             return items;
         }
     }
