@@ -1768,7 +1768,8 @@ namespace OoTMMTracker.Services
                         M("NPC.png", 271, 410, 40, "OOT Skulltula House 20 Tokens", "Skulltula House 20 Tokens"),
                         M("NPC.png", 454, 95, 40, "OOT Skulltula House 30 Tokens", "Skulltula House 30 Tokens"),
                         M("NPC.png", 270, 210, 40, "OOT Skulltula House 40 Tokens", "Skulltula House 40 Tokens"),
-                        M("NPC.png", 630, 210, 40, "OOT Skulltula House 50 Tokens", "Skulltula House 50 Tokens")
+                        M("NPC.png", 630, 210, 40, "OOT Skulltula House 50 Tokens", "Skulltula House 50 Tokens"),
+						M("NPC.png", 454, 291, 40, "OOT Skulltula House 100 Tokens", "Skulltula House 100 Tokens")
                     }
                 },
                 new MapSubRegion
