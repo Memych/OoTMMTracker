@@ -20,6 +20,12 @@
 - Updated TrackerOptionsForm with new checkboxes for all added features
 - Improved item tracking logic for shared/exclusive item display
 
+### Bug Fixes
+- Fixed shared properties initialization in FromSpoilerLog method
+- Corrected checkbox linking in UI for shared properties
+- Updated BtnOk_Click method to save all new configuration properties
+- Fixed item display logic when shared properties are enabled
+
 ## v1.2.6
 
 ### New Features
