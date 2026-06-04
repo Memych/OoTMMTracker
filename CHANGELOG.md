@@ -5,7 +5,7 @@
 ### New Features
 - Added Great Fairy Sword support for OoT (gfsOot setting)
 - Added Powder Keg support for OoT (powderKegOot setting)
-- Added Rusty Keys support for OoT (rustyKeysOot setting) - 26 different key types
+- Added Rusty Keys support for OoT (rustyKeysOot setting) - 27 different key types
 - Added Rusty Keys support for MM (rustyKeysMm setting) - 39 different key types, added preemptively
 - Added shared properties for Great Fairy Sword (sharedGfs) and Powder Keg (sharedPowderKeg)
 - Rusty Keys now displayed as two separate blocks: "Rusty Keys (OoT)" and "Rusty Keys (MM)"
