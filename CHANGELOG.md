@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.2.7
+
+### New Features
+- Added Great Fairy Sword support for OoT (gfsOot setting)
+- Added Powder Keg support for OoT (powderKegOot setting)
+- Added Rusty Keys support for OoT (rustyKeysOot setting) - 26 different key types
+- Added Rusty Keys support for MM (rustyKeysMm setting) - 39 different key types, added preemptively
+- Added shared properties for Great Fairy Sword (sharedGfs) and Powder Keg (sharedPowderKeg)
+- Rusty Keys now displayed as two separate blocks: "Rusty Keys (OoT)" and "Rusty Keys (MM)"
+- All Rusty Keys sorted alphabetically within their respective blocks
+- Rusty Keys icons now have text labels for easy identification
+
+### Improvements
+- Updated AllItemsShared property to include SharedGfs and SharedPowderKeg
+- Great Fairy Sword and Powder Keg logic updated to respect shared properties
+- MM Fairy Sword and Powder Keg now respect SharedGfs and SharedPowderKeg properties
+- Enhanced GetRustyKeysOot and GetRustyKeysMm methods with alphabetical sorting and StaticLabel support
+- Updated TrackerOptionsForm with new checkboxes for all added features
+- Improved item tracking logic for shared/exclusive item display
+
 ## v1.2.6
 
 ### New Features
