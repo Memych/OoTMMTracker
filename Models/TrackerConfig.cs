@@ -19,6 +19,8 @@ namespace OoTMMTracker.Models
         public bool OotSpinUpgrade { get; set; } = false;
         public bool OotBronzeScale { get; set; } = false;
         public bool OotStoneAgony { get; set; } = true;
+        public bool GfsOot { get; set; } = false;         // gfsOot - Great Fairy Sword
+        public bool PowderKegOot { get; set; } = false;   // powderKegOot - Powder Keg
 
         // MM
         public bool MmStrength { get; set; } = false;
@@ -35,6 +37,8 @@ namespace OoTMMTracker.Models
         public bool ColossalWallet { get; set; } = false;
         public bool BottomlessWallet { get; set; } = false;
         public bool ChildWallet { get; set; } = false;
+        public bool RustyKeysOot { get; set; } = false;   // rustyKeysOot - Rusty Keys
+        public bool RustyKeysMm { get; set; } = false;    // rustyKeysMm - Rusty Keys (MM)
 
         // Shared — combined items
         public bool SharedSwords { get; set; } = false;
@@ -78,7 +82,7 @@ namespace OoTMMTracker.Models
         public bool AllItemsShared =>
             SharedBows && SharedFireArrows && SharedIceArrows && SharedLightArrows &&
             SharedHookshot && SharedHammer && SharedLens && SharedNutsSticks &&
-            SharedBombBags && SharedBombchu &&
+            SharedBombBags && SharedBombchu && SharedGfs && SharedPowderKeg &&
             SharedSpellFire && SharedSpellWind && SharedSpellLove;
         // Shared masks
         public bool SharedMaskGoron { get; set; } = false;
@@ -240,6 +244,8 @@ namespace OoTMMTracker.Models
         // These items are always shared if enabled
         public bool SharedStoneAgony { get; set; } = false;   // sharedStoneAgony
         public bool SharedSpinUpgrade { get; set; } = false;  // sharedSpinUpgrade
+        public bool SharedGfs { get; set; } = false;          // sharedGfs
+        public bool SharedPowderKeg { get; set; } = false;    // sharedPowderKeg
 
         public static TrackerConfig FromSpoilerLog(SpoilerLog log)
         {
@@ -291,6 +297,8 @@ namespace OoTMMTracker.Models
             cfg.SharedSpellLove     = GetBool(log, "sharedSpellLove");
             cfg.SharedStoneAgony    = GetBool(log, "sharedStoneAgony");
             cfg.SharedSpinUpgrade   = GetBool(log, "sharedSpinUpgrade");
+            cfg.SharedGfs           = GetBool(log, "sharedGFS");
+            cfg.SharedPowderKeg     = GetBool(log, "sharedPowderKeg");
 			cfg.SharedSongTime = GetBool(log, "sharedSongTime");
 			cfg.SharedSongEpona = GetBool(log, "sharedSongEpona");
 			cfg.SharedSongStorms = GetBool(log, "sharedSongStorms");
@@ -369,6 +377,10 @@ namespace OoTMMTracker.Models
             cfg.MmHammer            = GetBool(log, "hammerMm");
 			cfg.MmBoomerang         = GetBool(log, "boomerangMm");
 			cfg.OotKamaroMask       = GetBool(log, "kamaroMaskOot");
+            cfg.GfsOot              = GetBool(log, "gfsOot");
+            cfg.PowderKegOot        = GetBool(log, "powderKegOot");
+            cfg.RustyKeysOot        = GetBool(log, "rustyKeysOot");
+            cfg.RustyKeysMm         = GetBool(log, "rustyKeysMm");
             // Bombchu behavior — read from log (priority over saved settings)
             if (log.Settings.TryGetValue("bombchuBehaviorOot", out var bcOot))
                 cfg.BombchuBehaviorOot = bcOot == "bagSeparate" ? "bag" : bcOot == "bombBag" ? "bombBag" : "toggle";
