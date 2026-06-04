@@ -1699,103 +1699,20 @@ namespace OoTMMTracker.Services
 
         // ─── Rusty Keys ───────────────────────────────────────────────────────
 
-        public static List<TrackerItem> GetRustyKeys(TrackerConfig cfg)
-        {
-            var items = new List<TrackerItem>();
-            
-            if (cfg.RustyKeysOot)
-            {
-                // Rusty Keys for OoT - полный список из спойлер лога
-                items.Add(new() { Id="rusty_key_back_alley", Name="Rusty Key (Back Alley)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_granny", Name="Rusty Key (Granny)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_laboratory", Name="Rusty Key (Laboratory)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_treasure_game", Name="Rusty Key (Treasure Chest Game)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_guard_house", Name="Rusty Key (Guard House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_carpenter", Name="Rusty Key (Carpenter House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_hyrule_castle", Name="Rusty Key (Hyrule Castle)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_dog_lady_house", Name="Rusty Key (Dog Lady House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_bombchu_shop", Name="Rusty Key (Bombchu Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_child_bazaar", Name="Rusty Key (Child Bazaar)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_child_potion_shop", Name="Rusty Key (Child Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_child_shooting_gallery", Name="Rusty Key (Child Shooting Gallery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_bombchu_bowling", Name="Rusty Key (Bombchu Bowling)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_fishing_pond", Name="Rusty Key (Fishing Pond)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_silo", Name="Rusty Key (Silo)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_ranch_house", Name="Rusty Key (Ranch House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_ranch_house_room", Name="Rusty Key (Malon's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_kakariko_graveyard_hut", Name="Rusty Key (Kakariko Graveyard Hut)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_windmill", Name="Rusty Key (Windmill)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_impa_house", Name="Rusty Key (Impa's House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_granny_potion_shop", Name="Rusty Key (Granny Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_adult_shooting_gallery", Name="Rusty Key (Adult Shooting Gallery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_skulltula_house", Name="Rusty Key (Skulltula House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_adult_bazaar", Name="Rusty Key (Adult Bazaar)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_adult_potion_shop", Name="Rusty Key (Adult Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_adult_potion_shop_back", Name="Rusty Key (Adult Potion Shop Back)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-            }
-
-            if (cfg.RustyKeysMm)
-            {
-                // Rusty Keys for MM - полный список из спойлер лога
-                items.Add(new() { Id="rusty_key_tourist_information", Name="Rusty Key (Tourist Information)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_potion_shop", Name="Rusty Key (Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_post_office", Name="Rusty Key (Post Office)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_swordsman_school", Name="Rusty Key (Swordsman School)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_lottery", Name="Rusty Key (Lottery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_bomb_shop", Name="Rusty Key (Bomb Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_trading_post", Name="Rusty Key (Trading Post)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_curiosity_shop", Name="Rusty Key (Curiosity Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_kafei_hideout", Name="Rusty Key (Kafei's Hideout)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_town_archery", Name="Rusty Key (Town Archery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_swamp_archery", Name="Rusty Key (Swamp Archery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_observatory", Name="Rusty Key (Observatory)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_blacksmith", Name="Rusty Key (Blacksmith)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_music_house", Name="Rusty Key (Music House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_laboratory_mm", Name="Rusty Key (Oceanic Laboratory)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_beneath_graveyard", Name="Rusty Key (Beneath the Graveyard)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_dampe_house", Name="Rusty Key (Dampe's House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_mayor_residence", Name="Rusty Key (Mayor's Residence)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_mayor_residence_office", Name="Rusty Key (Mayor's Residence Office)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_mayor_residence_salon", Name="Rusty Key (Mayor's Residence Salon)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_mayor_residence_kafei", Name="Rusty Key (Kafei's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_treasure_game_mm", Name="Rusty Key (Treasure Game)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_honey_darling", Name="Rusty Key (Honey & Darling)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_milk_bar", Name="Rusty Key (Milk Bar)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_dog_racetrack", Name="Rusty Key (Doggy Racetrack)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_cucco_shack", Name="Rusty Key (Cucco Shack)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_ranch_house_mm", Name="Rusty Key (Romani Ranch House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_ranch_barn", Name="Rusty Key (Romani Ranch Barn)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_ranch_house_room_mm", Name="Rusty Key (Romani's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_zora_shop", Name="Rusty Key (Zora Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_zora_japas_room", Name="Rusty Key (Japas' Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_zora_tijo_room", Name="Rusty Key (Tijo's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_zora_lulu_room", Name="Rusty Key (Lulu's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_zora_evan_room", Name="Rusty Key (Evan's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_stock_pot_inn", Name="Rusty Key (Stock Pot Inn)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_stock_pot_inn_roof", Name="Rusty Key (Stock Pot Inn Roof)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_grandma_room", Name="Rusty Key (Grandma's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_stock_pot_inn_staff_room", Name="Rusty Key (Stock Pot Inn Staff Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-                items.Add(new() { Id="rusty_key_stock_pot_inn_dormitory", Name="Rusty Key (Stock Pot Inn Dormitory)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png" });
-            }
-
-            return items;
-        }
-
         public static List<TrackerItem> GetRustyKeysOot(TrackerConfig cfg)
         {
             var items = new List<TrackerItem>();
             
             if (cfg.RustyKeysOot)
             {
-                // Rusty Keys for OoT - отсортированные по алфавиту с короткими метками
                 items.Add(new() { Id="rusty_key_adult_bazaar", Name="Rusty Key (Adult Bazaar)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Adult\nBazaar" });
                 items.Add(new() { Id="rusty_key_adult_potion_shop", Name="Rusty Key (Adult Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Adult\nPotion Shop" });
                 items.Add(new() { Id="rusty_key_adult_potion_shop_back", Name="Rusty Key (Adult Potion Shop Back)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Adult\nPotion Shop Back" });
                 items.Add(new() { Id="rusty_key_adult_shooting_gallery", Name="Rusty Key (Adult Shooting Gallery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Adult\nShooting Gallery" });
-                items.Add(new() { Id="rusty_key_back_alley", Name="Rusty Key (Back Alley)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Back\nAlley" });
+                items.Add(new() { Id="rusty_key_back_alley_house", Name="Rusty Key (Back Alley House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Back Alley\nHouse" });
                 items.Add(new() { Id="rusty_key_bombchu_bowling", Name="Rusty Key (Bombchu Bowling)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Bombchu\nBowling" });
                 items.Add(new() { Id="rusty_key_bombchu_shop", Name="Rusty Key (Bombchu Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Bombchu\nShop" });
-                items.Add(new() { Id="rusty_key_carpenter", Name="Rusty Key (Carpenter House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Carpenter\nHouse" });
+                items.Add(new() { Id="rusty_key_carpenter_house", Name="Rusty Key (Carpenter House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Carpenter\nHouse" });
                 items.Add(new() { Id="rusty_key_child_bazaar", Name="Rusty Key (Child Bazaar)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Child\nBazaar" });
                 items.Add(new() { Id="rusty_key_child_potion_shop", Name="Rusty Key (Child Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Child\nPotion Shop" });
                 items.Add(new() { Id="rusty_key_child_shooting_gallery", Name="Rusty Key (Child Shooting Gallery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Child\nShooting Gallery" });
@@ -1808,12 +1725,16 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="rusty_key_impa_house", Name="Rusty Key (Impa's House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Impa's\nHouse" });
                 items.Add(new() { Id="rusty_key_kakariko_graveyard_hut", Name="Rusty Key (Kakariko Graveyard Hut)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Kakariko\nGraveyard Hut" });
                 items.Add(new() { Id="rusty_key_laboratory", Name="Rusty Key (Laboratory)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Laboratory" });
+                items.Add(new() { Id="rusty_key_mask_shop", Name="Rusty Key (Mask Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Mask\nShop" });
                 items.Add(new() { Id="rusty_key_ranch_house", Name="Rusty Key (Ranch House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Ranch\nHouse" });
                 items.Add(new() { Id="rusty_key_ranch_house_room", Name="Rusty Key (Malon's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Malon's\nRoom" });
                 items.Add(new() { Id="rusty_key_silo", Name="Rusty Key (Silo)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Silo" });
                 items.Add(new() { Id="rusty_key_skulltula_house", Name="Rusty Key (Skulltula House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Skulltula\nHouse" });
                 items.Add(new() { Id="rusty_key_treasure_game", Name="Rusty Key (Treasure Chest Game)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Treasure\nChest Game" });
                 items.Add(new() { Id="rusty_key_windmill", Name="Rusty Key (Windmill)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Windmill" });
+                
+                // Сортировка по алфавиту по полю Name
+                items = items.OrderBy(item => item.Name).ToList();
             }
 
             return items;
@@ -1825,7 +1746,6 @@ namespace OoTMMTracker.Services
             
             if (cfg.RustyKeysMm)
             {
-                // Rusty Keys for MM - отсортированные по алфавиту с короткими метками
                 items.Add(new() { Id="rusty_key_beneath_graveyard", Name="Rusty Key (Beneath the Graveyard)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Beneath\nthe Graveyard" });
                 items.Add(new() { Id="rusty_key_blacksmith", Name="Rusty Key (Blacksmith)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Blacksmith" });
                 items.Add(new() { Id="rusty_key_bomb_shop", Name="Rusty Key (Bomb Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Bomb\nShop" });
@@ -1865,6 +1785,9 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="rusty_key_zora_lulu_room", Name="Rusty Key (Lulu's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Lulu's\nRoom" });
                 items.Add(new() { Id="rusty_key_zora_shop", Name="Rusty Key (Zora Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Zora\nShop" });
                 items.Add(new() { Id="rusty_key_zora_tijo_room", Name="Rusty Key (Tijo's Room)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Tijo's\nRoom" });
+                
+                // Сортировка по алфавиту по полю Name
+                items = items.OrderBy(item => item.Name).ToList();
             }
 
             return items;
