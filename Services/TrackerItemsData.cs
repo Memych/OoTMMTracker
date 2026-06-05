@@ -1718,7 +1718,7 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="rusty_key_child_shooting_gallery", Name="Rusty Key (Child Shooting Gallery)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Child\nShooting Gallery" });
                 items.Add(new() { Id="rusty_key_dog_lady_house", Name="Rusty Key (Dog Lady House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Dog Lady\nHouse" });
                 items.Add(new() { Id="rusty_key_fishing_pond", Name="Rusty Key (Fishing Pond)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Fishing\nPond" });
-                items.Add(new() { Id="rusty_key_granny", Name="Rusty Key (Granny)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Granny" });
+                items.Add(new() { Id="rusty_key_ranch_stable", Name="Rusty Key (Ranch Stable)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Ranch\nStable" });
                 items.Add(new() { Id="rusty_key_granny_potion_shop", Name="Rusty Key (Granny Potion Shop)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Granny\nPotion Shop" });
                 items.Add(new() { Id="rusty_key_guard_house", Name="Rusty Key (Guard House)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Guard\nHouse" });
                 items.Add(new() { Id="rusty_key_hyrule_castle", Name="Rusty Key (Hyrule Castle)", Type=TrackerItemType.Item, MaxCount=1, IconPath="dungeons/rusty_key.png", StaticLabel="Hyrule\nCastle" });
