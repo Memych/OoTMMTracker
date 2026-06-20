@@ -15,7 +15,7 @@
 - Added MM Slingshot to the item tracker (with configurable shared/separate display)
 
 ### Improvements
-— Reduced redundant work on log load and tracker rebuild
+- Reduced redundant work on log load and tracker rebuild
 - Tracker is now rebuilt with `resetProgress: true` on log load, fully clearing stale state from the previous log (found locations, item counts, per-panel progress)
 - Unloading a log (F6) also rebuilds the tracker to drop state derived from the previous log
 - `MapAccessibleLocations` runs against a single world snapshot to avoid recomputing the full known-location set on every change
