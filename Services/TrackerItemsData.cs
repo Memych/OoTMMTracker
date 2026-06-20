@@ -1057,7 +1057,7 @@ namespace OoTMMTracker.Services
             MakeDungeon("great_bay",     "Great Bay Temple",   "dungeons/labels/great_bay_temple.png"),
             MakeDungeon("stone_tower",   "Stone Tower Temple", "dungeons/labels/stone_tower_temple.png"),
             MakeDungeon("deku_tree",     "Deku Tree",          "dungeons/labels/deku_tree.png"),
-            MakeDungeon("dodongo",       "Dodongo's Cavern",   "dungeons/labels/dodongos_cavern.png"),
+            MakeDungeon("dodongo",       "Dodongo Cavern",   "dungeons/labels/dodongos_cavern.png"),
             MakeDungeon("jabu",          "Inside Jabu-Jabu",   "dungeons/labels/jabu-jabu.png"),
             MakeDungeon("forest_temple", "Forest Temple",      "dungeons/labels/forest_temple.png"),
             MakeDungeon("fire_temple",   "Fire Temple",        "dungeons/labels/fire_temple.png"),
@@ -1075,7 +1075,7 @@ namespace OoTMMTracker.Services
             ("great_bay",     "Great Bay Temple",    "dungeons/labels/great_bay_temple.png"),
             ("stone_tower",   "Stone Tower Temple",  "dungeons/labels/stone_tower_temple.png"),
             ("deku_tree",     "Deku Tree",           "dungeons/labels/deku_tree.png"),
-            ("dodongo",       "Dodongo's Cavern",    "dungeons/labels/dodongos_cavern.png"),
+            ("dodongo",       "Dodongo Cavern",    "dungeons/labels/dodongos_cavern.png"),
             ("jabu",          "Inside Jabu-Jabu",    "dungeons/labels/jabu-jabu.png"),
             ("forest_temple", "Forest Temple",       "dungeons/labels/forest_temple.png"),
             ("fire_temple",   "Fire Temple",         "dungeons/labels/fire_temple.png"),
@@ -1417,7 +1417,13 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="mm_hammer",  Name="Megaton Hammer (MM)", Type=TrackerItemType.Item, MaxCount=1, IconPath="items/megaton_hammer.png" });
 			if (cfg.MmBoomerang) 
 				items.Add(new() { Id="mm_boomerang", Name="Boomerang (MM)", Type=TrackerItemType.Item, MaxCount=1, IconPath="items/boomerang.png" });
-			
+            if (cfg.MmSlingshot)
+            {
+                items.Add(new() { Id = "mm_slingshot", Name = "Slingshot (MM)", Type = TrackerItemType.Item, MaxCount = 3,
+                    StepNames = new[] { "Slingshot (30)", "Slingshot (40)", "Slingshot (50)" },
+                    StepLabels = new[] { "30", "40", "50" }, IconPath = "items/fairy_slingshot.png" });
+            }
+
             return items;
         }
 
@@ -1446,7 +1452,13 @@ namespace OoTMMTracker.Services
                 items.Add(new() { Id="sh_nayrus_love",  Name="Nayru's Love",  Type=TrackerItemType.Item, MaxCount=1, IconPath="items/nayrus_love.png" });
             if (cfg.SharedBoomerang) 
 				items.Add(new TrackerItem { Id = "sh_boomerang", Name = "Boomerang", Type = TrackerItemType.Item, IconPath = "items/boomerang.png" });
-			if (cfg.SharedHookshot)
+            if (cfg.SharedSlingshot)
+            {
+                items.Add(new() { Id = "sh_slingshot", Name = "Slingshot", Type = TrackerItemType.Item, MaxCount = 3,
+                    StepNames = new[] { "Slingshot (30)", "Slingshot (40)", "Slingshot (50)" },
+                    StepLabels = new[] { "30", "40", "50" }, IconPath = "items/fairy_slingshot.png" });
+            }
+            if (cfg.SharedHookshot)
                 items.Add(new() { Id="sh_hookshot", Name="Hookshot", Type=TrackerItemType.Item, MaxCount=2,
                     StepNames=new[]{"Hookshot","Longshot"},
                     StepIconPaths=new[]{"items/short_hookshot.png","items/longshot.png"}, IconPath="items/short_hookshot.png" });

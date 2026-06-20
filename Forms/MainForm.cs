@@ -1,4 +1,8 @@
+using OoTMMTracker.Controls;
+using OoTMMTracker.Models;
+using OoTMMTracker.Services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -6,9 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows.Forms;
-using OoTMMTracker.Models;
-using OoTMMTracker.Services;
-using OoTMMTracker.Controls;
 
 namespace OoTMMTracker.Forms
 {
@@ -89,10 +90,13 @@ namespace OoTMMTracker.Forms
         
         private Button _btnLoadFile = null!;
         private TextBox _txtSearch = null!;
+        private ComboBox _cmbTrackerWorldFilter = null!;
+        private ComboBox _cmbWorldFilter = null!;
         private ComboBox _cmbGameFilter   = null!;
         private ComboBox _cmbRegionFilter = null!;
         private ComboBox _cmbFoundFilter  = null!;
         private CheckBox _chkHideItems    = null!;
+        private ComboBox? _cmbMapWorld;
         private ComboBox _cmbMapRegion    = null!;
         private ComboBox _cmbMapSub       = null!;
         private ComboBox _cmbMapGame      = null!;
@@ -116,13 +120,20 @@ namespace OoTMMTracker.Forms
         private Label _lblInfo = null!;
         private Panel _trackerScrollPanel = null!;
         private Panel _leftPanel = null!;
+        private Panel _trackerWorldFilterPanel = null!;
         private Controls.MapTrackerPanel _mapTrackerPanel = null!;
+        private MapLogicEvaluator _mapLogicEvaluator;
         private TrackerConfig _currentTrackerConfig = new();
         private BroadcastForm? _broadcastForm;
-		private Label _lblMapZoomLevel = null!; 
+		private Label _lblMapZoomLevel = null!;
+        private Label _lblMapRegionCounter = null!;
+        private Label _lblMapSubCounter = null!;
 
         // Found locations: key = "Game|Location"
         private readonly HashSet<string> _foundLocations = new HashSet<string>();
+        private readonly Dictionary<string, int> _sessionProgress = new();
+        private Dictionary<string, string> _locationCache = new();
+        private Dictionary<string, HashSet<string>> _locationsByWorld = new();
         private HashSet<string> _knownLocations   = new HashSet<string>();
         private HashSet<string> _coloredLocations = new HashSet<string>();
         private string? _currentSpoilerLogPath;
@@ -160,19 +171,6 @@ namespace OoTMMTracker.Forms
             }
             catch { }
         }
-
-        // Reads hint from log (only if settings file doesn't exist yet)
-        private void ApplyBombchuHintFromLog()
-        {
-            if (File.Exists(SettingsPath)) return; // already have saved settings
-            if (_spoilerLog == null) return;
-            if (_spoilerLog.Settings.TryGetValue("bombchuBehaviorOot", out var bcOot))
-                _currentTrackerConfig.BombchuBehaviorOot = bcOot == "bagSeparate" ? "bag" : bcOot == "bombBag" ? "bombBag" : "toggle";
-            if (_spoilerLog.Settings.TryGetValue("bombchuBehaviorMm", out var bcMm))
-                _currentTrackerConfig.BombchuBehaviorMm = bcMm == "bagSeparate" ? "bag" : bcMm == "bombBag" ? "bombBag" : "toggle";
-            SaveTrackerSettings(); // save as default
-        }
-        
         public MainForm()
         {
             _parser = new SpoilerLogParser();
@@ -193,7 +191,7 @@ namespace OoTMMTracker.Forms
             InitializeComponent();
             LoadTrackerSettings();
             RebuildTracker();
-            
+            UpdateTrackerWorldFilterVisibility();
             // Test default transitions on startup
             DefaultTransitionService.TestAllDefaultTransitions();
         }
@@ -302,10 +300,43 @@ namespace OoTMMTracker.Forms
             this.Controls.Add(infoBar);
             this.Controls.Add(menuStrip);
 
+            _trackerWorldFilterPanel = new Panel
+            {
+                Height = 40,
+                Width = 523,
+                Location = new Point(0, 0),
+                BackColor = Color.FromArgb(30, 30, 30)
+            };
+            var lblTWorld = new Label { Text = "Player/World:", Location = new Point(10, 10), Size = new Size(60, 20), ForeColor = Color.White, AutoSize = true };
+            _cmbTrackerWorldFilter = new ComboBox { Location = new Point(90, 7), Size = new Size(120, 22), DropDownStyle = ComboBoxStyle.DropDownList };
+
+            _cmbTrackerWorldFilter.SelectedIndexChanged += (s, e) =>
+            {
+                if (_cmbMapWorld != null && _cmbTrackerWorldFilter.SelectedItem != null)
+                {
+                    string selectedWorld = _cmbTrackerWorldFilter.SelectedItem.ToString()!;
+                    if (_cmbMapWorld.Items.Contains(selectedWorld))
+                    {
+                        if (!string.Equals(_cmbMapWorld.SelectedItem?.ToString(), selectedWorld, StringComparison.OrdinalIgnoreCase))
+                            _cmbMapWorld.SelectedItem = selectedWorld;
+                    }
+                }
+                UpdateTrackerConfigForCurrentWorld();
+
+                RebuildTracker();
+                UpdateStartingItemsList();
+                _updateMapCounters?.Invoke();
+                RefreshComboBoxDisplay();
+            };
+            _trackerWorldFilterPanel.Controls.Add(lblTWorld);
+            _trackerWorldFilterPanel.Controls.Add(_cmbTrackerWorldFilter);
+            _leftPanel.Controls.Add(_trackerWorldFilterPanel);
+
             // Tracker inside left panel
             _trackerScrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(30, 30, 30) };
             _leftPanel.Controls.Add(_trackerScrollPanel);
             RebuildTracker();
+            UpdateTrackerWorldFilterVisibility();
             // Right panel: search + tabs
             var rightPanel = rightContainer;
             // Search panel: outer container with fixed height, inner panel scrolls horizontally
@@ -314,7 +345,7 @@ namespace OoTMMTracker.Forms
             {
                 Location  = new Point(0, 0),
                 Height    = 36,
-                Width     = 1210,
+                Width     = 1320,
                 BackColor = Color.FromArgb(45, 45, 45)
             };
             var searchHScroll = new HScrollBar
@@ -322,7 +353,7 @@ namespace OoTMMTracker.Forms
                 Dock    = DockStyle.Bottom,
                 Height  = 16,
                 Minimum = 0,
-                Maximum = 1210,
+                Maximum = 1320,
                 SmallChange = 20,
                 LargeChange = 200,
             };
@@ -355,34 +386,50 @@ namespace OoTMMTracker.Forms
             _txtSearch = new TextBox { Location = new Point(58, 7), Size = new Size(220, 22) };
             _txtSearch.TextChanged += TxtSearch_TextChanged;
             searchInner.Controls.Add(_txtSearch);
-            
-            searchInner.Controls.Add(new Label { Text = "Game:", Location = new Point(286, 10), Size = new Size(45, 20), ForeColor = Color.White });
-            _cmbGameFilter = new ComboBox { Location = new Point(334, 7), Size = new Size(100, 22), DropDownStyle = ComboBoxStyle.DropDownList };
+
+            searchInner.Controls.Add(new Label { Text = "World:", Location = new Point(286, 10), Size = new Size(45, 20), ForeColor = Color.White });
+            _cmbWorldFilter = new ComboBox { Location = new Point(334, 7), Size = new Size(100, 22), DropDownStyle = ComboBoxStyle.DropDownList };
+            _cmbWorldFilter.Items.Add("All Worlds");
+            _cmbWorldFilter.SelectedIndex = 0;
+            _cmbWorldFilter.Visible = false;
+            searchInner.Controls.Add(_cmbWorldFilter);
+            _cmbWorldFilter.SelectedIndexChanged += (s, e) =>
+            {
+                UpdateLocationsList(_txtSearch.Text);
+                UpdateWorldFlagsList();
+                UpdateEntrancesList();
+                PopulateSongEvents();
+                UpdateStartingItemsList();
+            };
+
+            searchInner.Controls.Add(new Label { Text = "Game:", Location = new Point(442, 10), Size = new Size(45, 20), ForeColor = Color.White });
+            _cmbGameFilter = new ComboBox { Location = new Point(490, 7), Size = new Size(100, 22), DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbGameFilter.Items.AddRange(new object[] { "All", "OoT", "MM" });
             _cmbGameFilter.SelectedIndex = 0;
-            _cmbGameFilter.SelectedIndexChanged += (s, e) => 
+            _cmbGameFilter.SelectedIndexChanged += (s, e) =>
             {
-                PopulateRegionFilter(); // Update region filter based on selected game
+                UpdateWorldFlagsList();
+                PopulateRegionFilter();
                 UpdateLocationsList(_txtSearch.Text);
             };
-            _cmbGameFilter.Enabled = false; // Disabled until log is loaded with both games
+            _cmbGameFilter.Enabled = false;
             searchInner.Controls.Add(_cmbGameFilter);
-            
-            searchInner.Controls.Add(new Label { Text = "Region:", Location = new Point(442, 10), Size = new Size(55, 20), ForeColor = Color.White });
-            _cmbRegionFilter = new ComboBox { Location = new Point(500, 7), Size = new Size(220, 22), DropDownStyle = ComboBoxStyle.DropDownList };
+
+            searchInner.Controls.Add(new Label { Text = "Region:", Location = new Point(598, 10), Size = new Size(55, 20), ForeColor = Color.White });
+            _cmbRegionFilter = new ComboBox { Location = new Point(656, 7), Size = new Size(220, 22), DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbRegionFilter.Items.Add("All Regions");
             _cmbRegionFilter.SelectedIndex = 0;
             _cmbRegionFilter.SelectedIndexChanged += CmbRegionFilter_SelectedIndexChanged;
             searchInner.Controls.Add(_cmbRegionFilter);
-            
-            searchInner.Controls.Add(new Label { Text = "Status:", Location = new Point(728, 10), Size = new Size(50, 20), ForeColor = Color.White });
-            _cmbFoundFilter = new ComboBox { Location = new Point(780, 7), Size = new Size(120, 22), DropDownStyle = ComboBoxStyle.DropDownList };
+
+            searchInner.Controls.Add(new Label { Text = "Status:", Location = new Point(884, 10), Size = new Size(50, 20), ForeColor = Color.White });
+            _cmbFoundFilter = new ComboBox { Location = new Point(936, 7), Size = new Size(120, 22), DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbFoundFilter.Items.AddRange(new object[] { "All", "Not Found", "Found" });
             _cmbFoundFilter.SelectedIndex = 0;
             _cmbFoundFilter.SelectedIndexChanged += (s, e) => UpdateLocationsList(_txtSearch.Text);
             searchInner.Controls.Add(_cmbFoundFilter);
 
-            _chkHideItems = new CheckBox { Text = "Hide Items", Location = new Point(910, 9), Size = new Size(90, 18), ForeColor = Color.White };
+            _chkHideItems = new CheckBox { Text = "Hide Items", Location = new Point(1066, 9), Size = new Size(90, 18), ForeColor = Color.White };
             _chkHideItems.CheckedChanged += (s, e) =>
             {
                 _dgvLocations.Columns["Item"]!.Visible = !_chkHideItems.Checked;
@@ -390,19 +437,18 @@ namespace OoTMMTracker.Forms
             };
             searchInner.Controls.Add(_chkHideItems);
 
-            _chkColorHighlight = new CheckBox { Text = "Colors", Location = new Point(1008, 9), Size = new Size(70, 18), ForeColor = Color.White, Checked = false };
+            _chkColorHighlight = new CheckBox { Text = "Colors", Location = new Point(1164, 9), Size = new Size(70, 18), ForeColor = Color.White, Checked = false };
             _chkColorHighlight.CheckedChanged += (s, e) =>
             {
                 UpdateLocationsList(_txtSearch.Text);
                 _mapTrackerPanel.SetColorsMode(_chkColorHighlight.Checked);
                 UpdateMapColoredLocations();
                 _updateMapCounters?.Invoke();
-                // Refresh combo box display to update completion indicators when Colors mode changes
                 RefreshComboBoxDisplay();
             };
             searchInner.Controls.Add(_chkColorHighlight);
 
-            _lblCounter = new Label { Location = new Point(1086, 10), Size = new Size(120, 18), ForeColor = Color.FromArgb(180, 180, 180), TextAlign = ContentAlignment.MiddleLeft };
+            _lblCounter = new Label { Location = new Point(1242, 10), Size = new Size(120, 18), ForeColor = Color.FromArgb(180, 180, 180), TextAlign = ContentAlignment.MiddleLeft };
             searchInner.Controls.Add(_lblCounter);
 
             _tabControl = new TabControl { Dock = DockStyle.Fill };            // Tab: Locations
@@ -421,6 +467,7 @@ namespace OoTMMTracker.Forms
                 ReadOnly = false
             };
             _dgvLocations.Columns.Add(chkCol);
+            _dgvLocations.Columns.Add("World", "World");
             _dgvLocations.Columns.Add("Game", "Game");
             _dgvLocations.Columns.Add("Region", "Region");
             _dgvLocations.Columns.Add("Location", "Location");
@@ -430,6 +477,8 @@ namespace OoTMMTracker.Forms
             _dgvLocations.Columns[2].ReadOnly = true;
             _dgvLocations.Columns[3].ReadOnly = true;
             _dgvLocations.Columns[4].ReadOnly = true;
+            _dgvLocations.Columns[5].ReadOnly = true;
+            _dgvLocations.Columns[1].FillWeight = 10;
             _dgvLocations.Columns[1].FillWeight = 8;
             _dgvLocations.Columns[2].FillWeight = 22;
             _dgvLocations.Columns[3].FillWeight = 35;
@@ -454,17 +503,23 @@ namespace OoTMMTracker.Forms
             var tabTricks = new TabPage("Tricks");
             _lstTricks = new ListBox { Dock = DockStyle.Fill };
             tabTricks.Controls.Add(_lstTricks); innerTabs.TabPages.Add(tabTricks);
-            
+
             var tabStart = new TabPage("Starting Items");
             _dgvStartingItems = MakeGrid();
-            _dgvStartingItems.Columns.Add("Item", "Item");    _dgvStartingItems.Columns[0].FillWeight = 70;
-            _dgvStartingItems.Columns.Add("Qty", "Quantity");  _dgvStartingItems.Columns[1].FillWeight = 30;
-            tabStart.Controls.Add(_dgvStartingItems); innerTabs.TabPages.Add(tabStart);
-            
+            _dgvStartingItems.Columns.Add("Player", "Player");
+            _dgvStartingItems.Columns[0].FillWeight = 25;
+            _dgvStartingItems.Columns.Add("Item", "Item");
+            _dgvStartingItems.Columns[1].FillWeight = 55;
+            _dgvStartingItems.Columns.Add("Qty", "Quantity");
+            _dgvStartingItems.Columns[2].FillWeight = 20;
+            tabStart.Controls.Add(_dgvStartingItems);
+            innerTabs.TabPages.Add(tabStart);
+
             var tabFlags = new TabPage("World Flags");
             _dgvWorldFlags = MakeGrid();
-            _dgvWorldFlags.Columns.Add("Flag", "Flag");   _dgvWorldFlags.Columns[0].FillWeight = 60;
-            _dgvWorldFlags.Columns.Add("Value", "Value"); _dgvWorldFlags.Columns[1].FillWeight = 40;
+            _dgvWorldFlags.Columns.Add("World", "World"); _dgvWorldFlags.Columns[0].FillWeight = 15;
+            _dgvWorldFlags.Columns.Add("Flag", "Flag"); _dgvWorldFlags.Columns[1].FillWeight = 50;
+            _dgvWorldFlags.Columns.Add("Value", "Value"); _dgvWorldFlags.Columns[2].FillWeight = 35;
             tabFlags.Controls.Add(_dgvWorldFlags); innerTabs.TabPages.Add(tabFlags);
             
             var tabSC = new TabPage("Special Conditions");
@@ -476,12 +531,13 @@ namespace OoTMMTracker.Forms
             
             tabSettings.Controls.Add(innerTabs);
             _tabControl.TabPages.Add(tabSettings);
-            
+
             // Tab: Entrances
             var tabEntrances = new TabPage("Entrances");
             _dgvEntrances = MakeGrid();
-            _dgvEntrances.Columns.Add("From", "From"); _dgvEntrances.Columns[0].FillWeight = 50;
-            _dgvEntrances.Columns.Add("To", "To");     _dgvEntrances.Columns[1].FillWeight = 50;
+            _dgvEntrances.Columns.Add("World", "World"); _dgvEntrances.Columns[0].FillWeight = 15;
+            _dgvEntrances.Columns.Add("From", "From"); _dgvEntrances.Columns[1].FillWeight = 45;
+            _dgvEntrances.Columns.Add("To", "To"); _dgvEntrances.Columns[2].FillWeight = 40;
             tabEntrances.Controls.Add(_dgvEntrances);
             _tabControl.TabPages.Add(tabEntrances);
 
@@ -506,9 +562,14 @@ namespace OoTMMTracker.Forms
                     : e.CellStyle.BackColor;
                 e.CellStyle.SelectionForeColor = e.CellStyle.ForeColor;
             };
-            _dgvSongEvents.Columns.Add("Location", "Location");
-            _dgvSongEvents.Columns[0].FillWeight = 60;
+            _dgvSongEvents.Columns.Add("World", "World");
+            _dgvSongEvents.Columns[0].FillWeight = 15;
             _dgvSongEvents.Columns[0].ReadOnly = true;
+            _dgvSongEvents.Columns["World"].SortMode = DataGridViewColumnSortMode.NotSortable;
+            _dgvSongEvents.Columns.Add("Location", "Location");
+            _dgvSongEvents.Columns[1].FillWeight = 50;
+            _dgvSongEvents.Columns[1].ReadOnly = true;
+            _dgvSongEvents.Columns["Location"].SortMode = DataGridViewColumnSortMode.NotSortable;
             // Song column — ComboBox
             var songCol = new DataGridViewComboBoxColumn
             {
@@ -523,6 +584,8 @@ namespace OoTMMTracker.Forms
 								   "Song of Healing", "Song of Soaring", "Sonata of Awakening", "Goron Lullaby (Intro)",
 								   "Goron Lullaby", "New Wave Bossa Nova", "Elegy of Emptiness", "Oath to Order");
             _dgvSongEvents.Columns.Add(songCol);
+            _dgvSongEvents.Columns["Song"].ReadOnly = false;
+            _dgvSongEvents.Columns["Song"].SortMode = DataGridViewColumnSortMode.NotSortable;
             _dgvSongEvents.CellValueChanged += DgvSongEvents_CellValueChanged;
             _dgvSongEvents.CurrentCellDirtyStateChanged += (s, e) =>
             {
@@ -541,33 +604,31 @@ namespace OoTMMTracker.Forms
 			};
             _mapTrackerPanel.MarkCompleted += (locationNames, game) =>
             {
+                string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+
                 foreach (var loc in locationNames)
                 {
-                    var key = $"{game}|{loc}";
+                    var key = $"{currentWorld}|{game}|{loc}";
                     _foundLocations.Add(key);
-                    // Check the corresponding row in the locations grid
                     foreach (DataGridViewRow row in _dgvLocations.Rows)
                     {
-                        if (row.Cells["Game"]?.Value?.ToString() == game &&
-                            row.Cells["Location"]?.Value?.ToString() == loc)
+                        if (row.Tag?.ToString() == key)
                         {
                             row.Cells[0].Value = true;
                             ApplyRowColor(row, true);
+                            break;
                         }
                     }
                 }
                 _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
+                UpdateMapAccessibleLocations();
                 _updateMapCounters?.Invoke();
-                // Refresh combo box display to update completion indicators
                 RefreshComboBoxDisplay();
-                // Update counter
-                int total    = _dgvLocations.Rows.Count;
+
+                int total = _dgvLocations.Rows.Count;
                 int checked_ = _dgvLocations.Rows.Cast<DataGridViewRow>().Count(r => r.Cells[0].Value is true);
                 if (_lblCounter != null)
                     _lblCounter.Text = $"{checked_}/{total} checked";
-                
-                // Refresh combo box display to show updated completion status
-                RefreshComboBoxDisplay();
             };
 
             var mapFilterPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Color.FromArgb(45, 45, 45) };
@@ -625,27 +686,44 @@ namespace OoTMMTracker.Forms
                     mapFilterInner.Location = new Point(0, 0);
                 }
             };
-            mapFilterRow1.Controls.Add(new Label { Text = "Game:", Location = new Point(6, 8), Size = new Size(42, 18), ForeColor = Color.White });
+            mapFilterRow1.Controls.Add(new Label { Text = "World:", Location = new Point(6, 8), Size = new Size(50, 18), ForeColor = Color.White });
+            _cmbMapWorld = new ComboBox
+            {
+                Location = new Point(56, 5),
+                Size = new Size(100, 22),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _cmbMapWorld.Items.Add("World 1");
+            _cmbMapWorld.SelectedIndex = 0;
+            _cmbMapWorld.SelectedIndexChanged += (s, e) =>
+            {
+                UpdateMapWorldFilter();
+            };
+            mapFilterRow1.Controls.Add(_cmbMapWorld);
+            _cmbMapWorld.Visible = false;
 
+            mapFilterRow1.Controls.Add(new Label { Text = "Game:", Location = new Point(164, 8), Size = new Size(45, 18), ForeColor = Color.White });
             _cmbMapGame = new ComboBox
             {
-                Location = new Point(50, 5), Size = new Size(80, 22),
+                Location = new Point(209, 5),
+                Size = new Size(80, 22),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             _cmbMapGame.Items.AddRange(new object[] { "All", "OoT", "MM" });
             _cmbMapGame.SelectedIndex = 0;
             mapFilterRow1.Controls.Add(_cmbMapGame);
             var cmbMapGame = _cmbMapGame;
+            cmbMapGame.SelectedIndexChanged += (s, e) => RebuildMapRegionList();
 
-            mapFilterRow1.Controls.Add(new Label { Text = "Region:", Location = new Point(138, 8), Size = new Size(52, 18), ForeColor = Color.White });
-
+            mapFilterRow1.Controls.Add(new Label { Text = "Region:", Location = new Point(297, 8), Size = new Size(55, 18), ForeColor = Color.White });
             _cmbMapRegion = new ComboBox
             {
-                Location = new Point(192, 5), Size = new Size(200, 22),
+                Location = new Point(352, 5),
+                Size = new Size(180, 22),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 DrawMode = DrawMode.OwnerDrawFixed
             };
-            
+
             // Handle custom drawing for region completion indicator
             _cmbMapRegion.DrawItem += (sender, e) =>
             {
@@ -672,10 +750,11 @@ namespace OoTMMTracker.Forms
                         .SelectMany(m => m.LocationNames)
                         .Distinct()
                         .ToList();
-                    
-                    int total = GetRegionTotalCount(allLocs, region.Game);
-                    int found = GetRegionFoundCount(allLocs, region.Game);
-                    
+
+                    string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+                    int total = GetRegionTotalCount(allLocs, region.Game, currentWorld);
+                    int found = GetRegionFoundCount(allLocs, region.Game, currentWorld);
+
                     // Draw region name with completion indicator
                     string displayText = region.Name;
                     Brush textBrush = Brushes.Black;
@@ -727,70 +806,57 @@ namespace OoTMMTracker.Forms
                     _cmbMapRegion.SelectedIndex = 0;
             }
 
-            cmbMapGame.SelectedIndexChanged += (s, e) => RebuildMapRegionList();
-
             mapFilterRow1.Controls.Add(_cmbMapRegion);
-            mapFilterRow1.Controls.Add(new Label { Text = "Sub-map:", Location = new Point(400, 8), Size = new Size(58, 18), ForeColor = Color.White });
+            mapFilterRow1.Controls.Add(new Label { Text = "Sub-map:", Location = new Point(540, 8), Size = new Size(60, 18), ForeColor = Color.White });
             _cmbMapSub = new ComboBox
             {
-                Location = new Point(460, 5), Size = new Size(200, 22),
+                Location = new Point(600, 5),
+                Size = new Size(180, 22),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 DrawMode = DrawMode.OwnerDrawFixed,
                 Enabled = false
             };
-            
+
             // Handle custom drawing for sub-region completion indicator
             _cmbMapSub.DrawItem += (sender, e) =>
             {
-                // Always use window background, no selection highlight
                 e.Graphics.FillRectangle(SystemBrushes.Window, e.Bounds);
-                
                 if (e.Index < 0) return;
-                
+
                 var item = _cmbMapSub.Items[e.Index];
-                
                 if (item is Models.MapSubRegion sub)
                 {
-                    // Get current region and game for context
                     var region = _cmbMapRegion.SelectedItem as Models.MapRegion;
                     string game = region?.Game ?? "OOT";
-                    
-                    // Calculate completion for this sub-region
+                    string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+
                     var subLocs = sub.Marks
                         .Where(m => !m.IsEntranceShuffleMark)
                         .SelectMany(m => m.LocationNames)
                         .Distinct()
                         .ToList();
-                    
-                    int total = GetRegionTotalCount(subLocs, game);
-                    int found = GetRegionFoundCount(subLocs, game);
-                    
-                    // Draw sub-region name with completion indicator
+                    int total = GetRegionTotalCount(subLocs, game, currentWorld);
+                    int found = GetRegionFoundCount(subLocs, game, currentWorld);
+
                     string displayText = sub.Name;
                     Brush textBrush = Brushes.Black;
-                    
-                    // If sub-region is fully completed, show with green checkmark (including 0/0)
+
                     if (found == total)
                     {
                         displayText = "✓ " + displayText;
                         textBrush = Brushes.LimeGreen;
                     }
-                    // If sub-region has some progress but not complete
                     else if (found > 0)
                     {
                         displayText = $"{displayText} ({found}/{total})";
                         textBrush = Brushes.Black;
                     }
-                    
                     e.Graphics.DrawString(displayText, e.Font, textBrush, e.Bounds);
                 }
                 else
                 {
                     e.Graphics.DrawString(item?.ToString() ?? "", e.Font, Brushes.Black, e.Bounds);
                 }
-                
-                // Don't draw focus rectangle to avoid any visual selection indicator
-                // e.DrawFocusRectangle();
             };
             var cmbMapRegion = _cmbMapRegion;
             var cmbMapSub    = _cmbMapSub;
@@ -798,12 +864,12 @@ namespace OoTMMTracker.Forms
             // Counters: region total and sub-region
             var lblMapRegionCounter = new Label
             {
-                Location = new Point(760, 8), Size = new Size(100, 18),
+                Location = new Point(790, 8), Size = new Size(100, 18),
                 ForeColor = Color.FromArgb(180, 180, 180), Text = ""
             };
             var lblMapSubCounter = new Label
             {
-                Location = new Point(864, 8), Size = new Size(100, 18),
+                Location = new Point(900, 8), Size = new Size(100, 18),
                 ForeColor = Color.FromArgb(180, 180, 180), Text = ""
             };
 
@@ -949,39 +1015,26 @@ namespace OoTMMTracker.Forms
                 {
                     var prev = cmbQuickJump.SelectedItem as MapJumpTarget;
                     cmbQuickJump.Items.Clear();
-
-                    // Quick Jump is available with or without spoiler log for default transitions
-                    // but still requires a log for full functionality
-
-                    var fromIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    
-                    // Add shuffled entrances from spoiler log (if available)
-                    if (_spoilerLog != null)
-                    {
-                        foreach (var k in _spoilerLog.Entrances.Keys)
-                        {
-                            var id = EntranceMapNavigation.TryExtractEntranceId(k);
-                            if (id != null) fromIds.Add(id);
-                        }
-                    }
-                    
-                    // Add default transitions (always available)
+                    string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
                     foreach (var q in quickJumpsAll)
                     {
-                        if (DefaultTransitionService.HasDefaultTransition(q.FromId))
+                        bool exists = false;
+                        if (_spoilerLog != null)
                         {
-                            fromIds.Add(EntranceMapNavigation.NormalizeEntranceIdToken(q.FromId));
+                            exists = _spoilerLog.Entrances.Keys.Any(k =>
+                                k.StartsWith(currentWorld, StringComparison.OrdinalIgnoreCase) &&
+                                k.Contains(q.FromId, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (!exists && DefaultTransitionService.HasDefaultTransition(q.FromId))
+                        {
+                            exists = true;
+                        }
+                        if (exists)
+                        {
+                            var label = BuildQuickJumpDisplayLabel(q);
+                            cmbQuickJump.Items.Add(new MapJumpTarget(label, q.FromId));
                         }
                     }
-
-                    foreach (var q in quickJumpsAll)
-                    {
-                        var qid = EntranceMapNavigation.NormalizeEntranceIdToken(q.FromId);
-                        if (!fromIds.Contains(qid)) continue;
-                        var label = BuildQuickJumpDisplayLabel(q);
-                        cmbQuickJump.Items.Add(new MapJumpTarget(label, q.FromId));
-                    }
-
                     cmbQuickJump.Enabled = cmbQuickJump.Items.Count > 0;
                     btnQuickJump.Enabled = cmbQuickJump.Items.Count > 0;
 
@@ -1040,23 +1093,26 @@ namespace OoTMMTracker.Forms
                 if (_spoilerLog == null)
                 {
                     lblMapRegionCounter.Text = "";
-                    lblMapSubCounter.Text    = "";
+                    lblMapSubCounter.Text = "";
                     return;
                 }
+
                 if (cmbMapRegion.SelectedItem is Models.MapRegion region)
                 {
                     var game = region.Game;
+                    string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+
                     var allLocs = region.SubRegions
                         .SelectMany(s => s.Marks)
                         .Where(m => !m.IsEntranceShuffleMark)
                         .SelectMany(m => m.LocationNames)
                         .Distinct()
                         .ToList();
-                    int total = GetRegionTotalCount(allLocs, game);
-                    int found = GetRegionFoundCount(allLocs, game);
+                    int total = GetRegionTotalCount(allLocs, game, currentWorld);
+                    int found = GetRegionFoundCount(allLocs, game, currentWorld);
+
                     lblMapRegionCounter.Text = $"Region: {found}/{total}";
-                    // Change color to green when all locations are found (including 0/0)
-                    lblMapRegionCounter.ForeColor = found == total ? Color.LimeGreen : Color.White;
+                    lblMapRegionCounter.ForeColor = (found == total && total > 0) ? Color.LimeGreen : Color.White;
 
                     if (cmbMapSub.SelectedItem is Models.MapSubRegion sub)
                     {
@@ -1065,11 +1121,11 @@ namespace OoTMMTracker.Forms
                             .SelectMany(m => m.LocationNames)
                             .Distinct()
                             .ToList();
-                        int subTotal = GetRegionTotalCount(subLocs, game);
-                        int subFound = GetRegionFoundCount(subLocs, game);
+                        int subTotal = GetRegionTotalCount(subLocs, game, currentWorld);
+                        int subFound = GetRegionFoundCount(subLocs, game, currentWorld);
+
                         lblMapSubCounter.Text = $"Sub: {subFound}/{subTotal}";
-                        // Change color to green when all sub-region locations are found (including 0/0)
-                        lblMapSubCounter.ForeColor = subFound == subTotal ? Color.LimeGreen : Color.White;
+                        lblMapSubCounter.ForeColor = (subFound == subTotal && subTotal > 0) ? Color.LimeGreen : Color.White;
                     }
                     else
                     {
@@ -1086,62 +1142,40 @@ namespace OoTMMTracker.Forms
 
             cmbMapRegion.SelectedIndexChanged += (s, e) =>
             {
-                cmbMapSub.Items.Clear();
-                cmbMapSub.Enabled = false;
-                _mapTrackerPanel.SetSubRegion(null, _foundLocations);
-
-                if (cmbMapRegion.SelectedItem is Models.MapRegion region)
-                {
-                    foreach (var sub in region.SubRegions)
-                    {
-                        // Filter sub-maps by required setting
-                        if (sub.RequiredSettingKey != null)
-                        {
-                            if (_spoilerLog == null) continue;
-                            // Check both Settings and WorldFlags
-                            string? val = null;
-                            if (!_spoilerLog.Settings.TryGetValue(sub.RequiredSettingKey, out val))
-                                _spoilerLog.WorldFlags.TryGetValue(sub.RequiredSettingKey, out val);
-                            if (val == null) continue;
-                            // Check: exact match OR contains in pipe-separated list
-                            bool matches = string.Equals(val, sub.RequiredSettingValue, StringComparison.OrdinalIgnoreCase);
-                            if (!matches && sub.RequiredSettingContains != null)
-                            {
-                                var parts = val.Split('|');
-                                matches = parts.Any(p => string.Equals(p.Trim(), sub.RequiredSettingContains, StringComparison.OrdinalIgnoreCase));
-                            }
-                            if (!matches) continue;
-                        }
-                        cmbMapSub.Items.Add(sub);
-                    }
-                    if (cmbMapSub.Items.Count > 0)
-                    {
-                        cmbMapSub.Enabled = true;
-                        cmbMapSub.SelectedIndex = 0;
-                    }
-                }
+                UpdateSubRegionsList();
                 UpdateMapCounters();
+                UpdateMapAccessibleLocations();
             };
 
             cmbMapSub.SelectedIndexChanged += (s, e) =>
             {
                 var sub = cmbMapSub.SelectedItem as Models.MapSubRegion;
                 var game = (cmbMapRegion.SelectedItem as Models.MapRegion)?.Game ?? "OOT";
-                _mapTrackerPanel.SetSubRegion(sub, _foundLocations, game);
+                string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+
+                _mapTrackerPanel.SetSubRegion(sub, _foundLocations, game, currentWorld);
                 _mapTrackerPanel.CenterMap();
                 _mapTrackerPanel.ResetZoomLevel();
                 _lblMapZoomLevel.Text = "100%";
                 UpdateMapCounters();
+                UpdateMapAccessibleLocations();
             };
 
             // Hook into location changes to refresh counters
             _dgvLocations.CellValueChanged += (s, e) => UpdateMapCounters();
             _updateMapCounters = UpdateMapCounters;
 
-            bool TryNavigateToMapSelection(string regionName, string subMapName, string game, bool showErrors)
+            bool TryNavigateToMapSelection(string regionName, string subMapName, string game, string? world, bool showErrors)
             {
                 _tabControl.SelectedTab = tabMap;
-                
+                if (!string.IsNullOrEmpty(world) && _cmbMapWorld != null)
+                {
+                    if (_cmbMapWorld.Items.Contains(world))
+                    {
+                        _cmbMapWorld.SelectedItem = world;
+                        UpdateMapWorldFilter();
+                    }
+                }
                 // Save current region and age filter state before changing region
                 Models.MapRegion? previousRegion = cmbMapRegion.SelectedItem as Models.MapRegion;
                 string currentAgeFilter = "child"; // default
@@ -1246,7 +1280,8 @@ namespace OoTMMTracker.Forms
 
             _mapTrackerPanel.NavigateMapTo += (regionName, subMapName, game) =>
             {
-                _ = TryNavigateToMapSelection(regionName, subMapName, game, showErrors: true);
+                string currentWorld = _cmbMapWorld?.SelectedItem?.ToString();
+                _ = TryNavigateToMapSelection(regionName, subMapName, game, currentWorld, showErrors: true);
             };
 
             btnQuickJump.Click += (s, e) =>
@@ -1257,50 +1292,59 @@ namespace OoTMMTracker.Forms
                 string region = null;
                 string sub = null;
                 string game = null;
+                string world = null;
                 bool success = false;
-
-                // 1. Try shuffled connection from spoiler log
-                if (_spoilerLog != null && EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, target.FromId, out var destLine))
+                string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+                if (_spoilerLog != null)
                 {
-                    if (EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out region, out sub, out game))
+                    var entranceKey = _spoilerLog.Entrances.Keys
+                        .FirstOrDefault(k => k.StartsWith(currentWorld, StringComparison.OrdinalIgnoreCase)
+                                           && k.Contains(target.FromId, StringComparison.OrdinalIgnoreCase));
+
+                    if (entranceKey != null)
                     {
-                        success = true;
+                        string destLine = _spoilerLog.Entrances[entranceKey];
+                        if (EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out region, out sub, out game))
+                        {
+                            if (destLine.StartsWith("World "))
+                            {
+                                var parts = destLine.Split(' ', 3);
+                                if (parts.Length >= 2) world = $"{parts[0]} {parts[1]}";
+                            }
+                            else
+                            {
+                                world = currentWorld;
+                            }
+                            success = true;
+                        }
                     }
                 }
-                // 2. Try default transition
-                else if (DefaultTransitionService.HasDefaultTransition(target.FromId))
+                if (!success && DefaultTransitionService.HasDefaultTransition(target.FromId))
                 {
-                    // Direct lookup in DestinationEntranceIds
                     if (DefaultTransitionService.TryGetMapForDefaultTransition(target.FromId, out region, out sub, out game))
                     {
+                        world = currentWorld;
                         success = true;
-                        Debug.WriteLine($"[QuickJump] Default transition found for {target.FromId}: region={region}, sub={sub}, game={game}");
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"[QuickJump] Default transition exists for {target.FromId} but no map found in DestinationEntranceIds");
                     }
                 }
-                // 3. Special case: wallmasters
-                else if (DefaultTransitionService.IsWallmaster(target.FromId))
+                else if (!success && DefaultTransitionService.IsWallmaster(target.FromId))
                 {
-                    MessageBox.Show(this,
-                        "Wallmaster teleports within the same area. No region change.",
-                        "Quick jump", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(this, "Wallmaster teleports within the same area.", "Quick jump", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
-
-                if (success)
+                else if (!success && EntranceMapNavigation.TryGetMapForDestinationId(target.FromId, out region, out sub, out game))
                 {
-                    _ = TryNavigateToMapSelection(region, sub, game, showErrors: true);
+                    world = currentWorld;
+                    success = true;
+                }
+
+                if (success && region != null)
+                {
+                    _ = TryNavigateToMapSelection(region, sub, game, world, showErrors: true);
                 }
                 else
                 {
-                    MessageBox.Show(this,
-                        $"No transition found for: {target.FromId}\n" +
-                        "If entrance shuffle is enabled, load a spoiler log to see shuffled connections.\n" +
-                        "Otherwise, this may be a vanilla connection that needs to be configured in MapRegionsData.",
-                        "Quick jump", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(this, $"No transition found for {target.FromId} in {currentWorld}.", "Quick jump", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             };
 
@@ -1395,11 +1439,19 @@ namespace OoTMMTracker.Forms
             this.KeyPreview = true;
             this.KeyDown += MainForm_KeyDown;
             // Update broadcast when any item changes
-            ItemTrackerPanel.ItemChanged += () => UpdateBroadcast();
+            ItemTrackerPanel.ItemChanged += () =>
+            {
+                UpdateBroadcast();
+                UpdateMapAccessibleLocations();
+            };
             // Unsubscribe on form close to prevent memory leaks
             this.FormClosed += (s, e) =>
             {
-                ItemTrackerPanel.ItemChanged -= () => UpdateBroadcast();
+                ItemTrackerPanel.ItemChanged -= () =>
+                {
+                    UpdateBroadcast();
+                    UpdateMapAccessibleLocations();
+                };
                 foreach (var panel in _trackerPanels)
                     panel.Dispose();
                 _trackerToolTip.Dispose();
@@ -1434,27 +1486,26 @@ namespace OoTMMTracker.Forms
         
         private readonly List<ItemTrackerPanel> _trackerPanels = new();
         private readonly ToolTip _trackerToolTip = new();
-        
         private void RebuildTracker(bool resetProgress = false)
         {
-            var progress = new Dictionary<string, int>();
-            // When loading a new log — don't transfer old progress
-            if (!resetProgress)
+            if (resetProgress)
+            {
+                _sessionProgress.Clear();
+            }
+            else
             {
                 foreach (var panel in _trackerPanels)
-                    panel.SaveProgress(progress);
+                {
+                    panel.SaveProgress(_sessionProgress);
+                }
             }
-            
-            // Dispose old panels to release event handlers and resources
-            foreach (var panel in _trackerPanels)
-                panel.Dispose();
+            foreach (var panel in _trackerPanels) panel.Dispose();
             _trackerPanels.Clear();
             _trackerScrollPanel.Controls.Clear();
             ItemTrackerPanel.ClearGlobal();
-            // Reset tooltips — otherwise after recreating panels tooltips disappear
             _trackerToolTip.RemoveAll();
             ItemTrackerPanel.SetGlobalConfig(_currentTrackerConfig);
-            
+
             var mainFlow = new FlowLayoutPanel
             {
                 AutoSize = true,
@@ -1463,10 +1514,22 @@ namespace OoTMMTracker.Forms
                 WrapContents = false,
                 Padding = new Padding(4),
                 BackColor = Color.FromArgb(30, 30, 30),
-                Location = new Point(0, 0)
+                Location = new Point(0, 0),
             };
-            
+
+            var topSpacer = new Panel
+            {
+                AutoSize = false,
+                Width = 100,
+                Height = 32,
+                Margin = new Padding(0),
+                Padding = new Padding(0),
+                BackColor = Color.FromArgb(30, 30, 30),
+            };
+            mainFlow.Controls.Add(topSpacer);
+
             var cfg = _currentTrackerConfig;
+            string currentWorld = _cmbTrackerWorldFilter?.SelectedItem?.ToString() ?? "World 1";
             bool hasShared = TrackerItemsData.GetSharedItems(cfg).Count > 0
                           || TrackerItemsData.GetSharedItems_Items(cfg).Count > 0
                           || TrackerItemsData.GetSharedBottles(cfg).Count > 0;
@@ -1476,6 +1539,7 @@ namespace OoTMMTracker.Forms
                 if (items.Count == 0) return;
                 int actualCols = Math.Min(cols, items.Count);
                 var p = new ItemTrackerPanel(title, items, actualCols, _trackerToolTip);
+                p.World = currentWorld;
                 _trackerPanels.Add(p);
                 mainFlow.Controls.Add(p);
             }
@@ -1528,24 +1592,29 @@ namespace OoTMMTracker.Forms
 
             // ── If rewards are shuffled anywhere — show separate rewards block first
             Add("Dungeon Rewards", TrackerItemsData.GetDungeonRewards(cfg), 9);
+
             foreach (var (id, name, label) in TrackerItemsData.DungeonList)
             {
                 bool isMm = id is "woodfall" or "snowhead" or "great_bay" or "stone_tower";
                 if (isMm && !cfg.HasMm) continue;
                 if (!isMm && !cfg.HasOot) continue;
-                var blockName = (!isMm && cfg.IsMq(id)) ? $"{name} (MQ)" : name;
+
+                bool isMq = cfg.IsMq(id);
+                var blockName = isMq ? $"{name} (MQ)" : name;
                 Add(blockName, TrackerItemsData.GetDungeonSingle(id, name, label, cfg), int.MaxValue);
             }
+
             foreach (var (id, name, label) in TrackerItemsData.SubDungeonList)
             {
                 if (!cfg.HasOot) continue;
-                var blockName = cfg.IsMq(id) ? $"{name} (MQ)" : name;
+                bool isMq = cfg.IsMq(id);
+                var blockName = isMq ? $"{name} (MQ)" : name;
                 Add(blockName, TrackerItemsData.GetDungeonSingle(id, name, label, cfg), int.MaxValue);
             }
             if (cfg.HasOot && cfg.SmallKeysHideout)
-                Add("Thieves' Hideout",    TrackerItemsData.GetDungeonSingle("thieves_hideout", "Thieves' Hideout",    "dungeons/labels/thieves_hideout.png",    cfg), int.MaxValue);
+                Add("Thieves' Hideout", TrackerItemsData.GetDungeonSingle("thieves_hideout", "Thieves' Hideout", "dungeons/labels/thieves_hideout.png", cfg), int.MaxValue);
             if (cfg.HasOot && cfg.SmallKeysTcg)
-                Add("Treasure Chest Game", TrackerItemsData.GetDungeonSingle("tcg",              "Treasure Chest Game", "dungeons/labels/treasure_chest_game.png", cfg), int.MaxValue);
+                Add("Treasure Chest Game", TrackerItemsData.GetDungeonSingle("tcg", "Treasure Chest Game", "dungeons/labels/treasure_chest_game.png", cfg), int.MaxValue);
 
             // ── 12. Skeleton Key + Magical Rupee ──────────────────────────────
             Add("Dungeon Items", TrackerItemsData.GetDungeonSpecialItems(cfg), 4);
@@ -1575,17 +1644,22 @@ namespace OoTMMTracker.Forms
             Add("Misc Souls",          SoulsData.GetMiscSoulsShared(cfg),    4);
             Add("Misc Souls (OoT)",    SoulsData.GetMiscSoulsOot(cfg),       4);
             Add("Misc Souls (MM)",     SoulsData.GetMiscSoulsMm(cfg),        4);
-            
+
             foreach (var panel in _trackerPanels)
-                panel.LoadProgress(progress);
-            
+                panel.LoadProgress(_sessionProgress);
+
+            if (_spoilerLog != null)
+                ApplyBottlesFromLog();
+
+            if (_spoilerLog != null)
+                ApplyStartingItems();
+
+            foreach (var panel in _trackerPanels)
+                panel.LoadProgress(_sessionProgress);
             _trackerScrollPanel.Controls.Add(mainFlow);
             UpdateBroadcast();
-            
-            // Update Song Events list
             PopulateSongEvents();
         }
-        
         private static void MigrateBottleIds(Dictionary<string, int> progress)
         {
             // Old IDs → new IDs mapping
@@ -1647,72 +1721,142 @@ namespace OoTMMTracker.Forms
         private void ApplyBottlesFromLog()
         {
             if (_spoilerLog == null) return;
+            string currentWorld = _cmbTrackerWorldFilter?.SelectedItem?.ToString() ?? "World 1";
+            var cfg = _currentTrackerConfig;
 
-            var progress = new Dictionary<string, int>();
-            foreach (var panel in _trackerPanels)
-                panel.SaveProgress(progress);
-
-            // Collect bottles from locations, grouped by game
             var ootBottles = new List<string>();
-            var mmBottles  = new List<string>();
-            var shBottles  = new List<string>();
+            var mmBottles = new List<string>();
+            bool isMultiworld = false;
+            int currentPlayerNum = 0;
+            if (currentWorld.StartsWith("World "))
+                int.TryParse(currentWorld.Substring(6), out currentPlayerNum);
 
             foreach (var loc in _spoilerLog.Locations.Values)
             {
-                var content = StartingItemsMapper.GetBottleContentPublic(loc.Item);
-                if (content == null) continue;
+                if (!isMultiworld && loc.Item.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
+                    isMultiworld = true;
 
-                var itemLower = loc.Item.ToLower();
-                // Determine game by item suffix
-                if (itemLower.Contains("(mm)"))
-                    mmBottles.Add(content);
-                else if (itemLower.Contains("(oot)"))
-                    ootBottles.Add(content);
-                // OoT-exclusive items (no suffix)
-                else if (content is "Ruto's Letter" or "Big Poe" or "Blue Fire")
-                    ootBottles.Add(content);
-                // MM-exclusive items (no suffix)
-                else if (content is "Gold Dust" or "Chateau Romani" or
-                         "Spring Water" or "Hot Spring Water" or
-                         "Zora Egg" or "Seahorse" or "Deku Princess" or "Magic Mushroom")
-                    mmBottles.Add(content);
+                bool isBottle = loc.Item.Contains("Bottle", StringComparison.OrdinalIgnoreCase)
+                               || loc.Item.Contains("Ruto's Letter", StringComparison.OrdinalIgnoreCase)
+                               || (loc.Item.StartsWith("Player ", StringComparison.OrdinalIgnoreCase) && (
+                                   loc.Item.Contains("Letter") || loc.Item.Contains("Milk") ||
+                                   loc.Item.Contains("Potion") || loc.Item.Contains("Poe") ||
+                                   loc.Item.Contains("Fire") || loc.Item.Contains("Fairy") ||
+                                   loc.Item.Contains("Fish") || loc.Item.Contains("Bugs") ||
+                                   loc.Item.Contains("Dust") || loc.Item.Contains("Egg") ||
+                                   loc.Item.Contains("Horse") || loc.Item.Contains("Princess") ||
+                                   loc.Item.Contains("Mushroom") || loc.Item.Contains("Spring") ||
+                                   loc.Item.Contains("Water")
+                               ));
+
+                if (!isBottle) continue;
+
+                if (isMultiworld)
+                {
+                    if (!loc.Item.StartsWith("Player ", StringComparison.OrdinalIgnoreCase)) continue;
+                    var parts = loc.Item.Split(new[] { ' ' }, 3);
+                    if (parts.Length < 2) continue;
+                    int itemPlayerNum = 0;
+                    int.TryParse(parts[1], out itemPlayerNum);
+                    if (itemPlayerNum != currentPlayerNum) continue;
+                }
                 else
                 {
-                    // Shared items (Milk, Potions, Poe, Fairy, Fish, Bugs) — by location game
-                    if (loc.Game == "OOT")
-                        ootBottles.Add(content);
-                    else
-                        mmBottles.Add(content);
+                    if (loc.World != currentWorld) continue;
                 }
+
+                string cleanItem = GetCleanPlayerItemName(loc.Item);
+                var content = StartingItemsMapper.GetBottleContentPublic(cleanItem);
+                if (content == null || content == "Empty") continue;
+
+                var itemLower = cleanItem.ToLower();
+                if (itemLower.Contains("(mm)")) mmBottles.Add(content);
+                else if (itemLower.Contains("(oot)")) ootBottles.Add(content);
+                else if (content is "Ruto's Letter" or "Big Poe" or "Blue Fire") ootBottles.Add(content);
+                else if (content is "Gold Dust" or "Chateau Romani" or "Spring Water" or "Hot Spring Water"
+                       or "Zora Egg" or "Seahorse" or "Deku Princess" or "Magic Mushroom") mmBottles.Add(content);
+                else ootBottles.Add(content);
             }
 
-            // Assign to tracker slots — sort by priority
-            bool shared = _currentTrackerConfig.SharedBottles;
-            if (shared)
+            var sortedOot = ootBottles.OrderBy(c => GetBottlePriority(c, StartingItemsMapper.OotBottleContentNames)).ToList();
+            var sortedMm = mmBottles.OrderBy(c => GetBottlePriority(c, StartingItemsMapper.MmBottleContentNames)).ToList();
+
+            var assignments = new Dictionary<string, string>();
+            if (cfg.SharedBottles)
             {
                 var all = ootBottles.Concat(mmBottles)
-                    .OrderBy(c => GetBottlePriority(c, StartingItemsMapper.ShBottleContentNames))
-                    .ToList();
+                                    .OrderBy(c => GetBottlePriority(c, StartingItemsMapper.ShBottleContentNames))
+                                    .ToList();
                 for (int i = 0; i < Math.Min(all.Count, 6); i++)
-                    SetBottleProgress(progress, $"sh_bottle_{i + 1}", all[i], StartingItemsMapper.ShBottleContentNames);
+                    assignments[$"sh_bottle_{i + 1}"] = all[i];
             }
             else
             {
-                var sortedOot = ootBottles
-                    .OrderBy(c => GetBottlePriority(c, StartingItemsMapper.OotBottleContentNames))
-                    .ToList();
-                var sortedMm = mmBottles
-                    .OrderBy(c => GetBottlePriority(c, StartingItemsMapper.MmBottleContentNames))
-                    .ToList();
                 for (int i = 0; i < Math.Min(sortedOot.Count, 4); i++)
-                    SetBottleProgress(progress, $"oot_bottle_{i + 1}", sortedOot[i], StartingItemsMapper.OotBottleContentNames);
+                    assignments[$"oot_bottle_{i + 1}"] = sortedOot[i];
                 for (int i = 0; i < Math.Min(sortedMm.Count, 6); i++)
-                    SetBottleProgress(progress, $"mm_bottle_{i + 1}", sortedMm[i], StartingItemsMapper.MmBottleContentNames);
+                    assignments[$"mm_bottle_{i + 1}"] = sortedMm[i];
             }
 
             foreach (var panel in _trackerPanels)
-                panel.LoadProgress(progress);
+            {
+                if (panel.World != currentWorld) continue;
+
+                var bottles = panel.Items.Where(i => i.IsBottle).ToList();
+                int ootIdx = 0;
+                int mmIdx = 0;
+
+                foreach (var bottle in bottles)
+                {
+                    bool isMm = bottle.Id.Contains("_mm_") || bottle.Id.StartsWith("mm_");
+
+                    string? assignedContent = null;
+                    if (isMm && mmIdx < sortedMm.Count)
+                        assignedContent = sortedMm[mmIdx];
+                    else if (!isMm && ootIdx < sortedOot.Count)
+                        assignedContent = sortedOot[ootIdx];
+
+                    if (assignedContent != null)
+                    {
+                        bottle.BottleContent = assignedContent;
+                        if (bottle.BottleContentIcons != null && bottle.BottleContentNames != null)
+                        {
+                            int idx = Array.IndexOf(bottle.BottleContentNames, assignedContent);
+                            if (idx >= 0) bottle.IconPath = bottle.BottleContentIcons[idx];
+                        }
+                        bottle.MaxCount = (bottle.BottleContent is "Ruto's Letter" or "Gold Dust") ? 2 : 1;
+                        bottle.CurrentCount = 0;
+
+                        if (isMm) mmIdx++;
+                        else ootIdx++;
+                    }
+                    else
+                    {
+                        bottle.BottleContent = "Empty";
+                        if (bottle.BottleContentIcons != null && bottle.BottleContentNames != null)
+                        {
+                            int idx = Array.IndexOf(bottle.BottleContentNames, "Empty");
+                            if (idx >= 0) bottle.IconPath = bottle.BottleContentIcons[idx];
+                        }
+                        bottle.MaxCount = 0;
+                        bottle.CurrentCount = 0;
+                    }
+                }
+
+                foreach (Control c in panel.Controls)
+                {
+                    if (c is PictureBox pb && pb.Tag is TrackerItem item && item.IsBottle)
+                    {
+                        ItemTrackerPanel.RefreshIconPublic(pb, item);
+                        pb.Invalidate();
+                    }
+                }
+                panel.Invalidate();
+            }
         }
+
+
+
 
         private static int GetBottlePriority(string content, string[] names)
         {
@@ -1722,30 +1866,76 @@ namespace OoTMMTracker.Forms
             return names.Length;
         }
 
-        private static void SetBottleProgress(Dictionary<string, int> progress, string id, string content, string[] names)
+        private void ApplyStartingItems()
         {
-            // Case-insensitive search
-            int idx = -1;
-            for (int i = 0; i < names.Length; i++)
-                if (string.Equals(names[i], content, StringComparison.OrdinalIgnoreCase))
-                { idx = i; break; }
-            if (idx < 0) idx = names.Length - 1; // empty
-            progress[id] = idx * 10; // not collected yet (count = 0)
-        }
-
-        private void ApplyStartingItems()        {
             if (_spoilerLog == null || _spoilerLog.StartingItems.Count == 0) return;
 
-            var progress = new Dictionary<string, int>();
-            foreach (var panel in _trackerPanels)
-                panel.SaveProgress(progress);
+            var itemsByWorld = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in _spoilerLog.StartingItems)
+            {
+                string rawKey = kv.Key;
+                string playerPart = rawKey;
+                string cleanKey = rawKey;
 
-            // Apply starting items (only set value, don't lock)
-            StartingItemsMapper.Apply(_spoilerLog, progress);
+                if (rawKey.Contains(':'))
+                {
+                    var colonParts = rawKey.Split(new[] { ':' }, 2);
+                    playerPart = colonParts[0].Trim();
+                    cleanKey = colonParts[1].Trim();
+                }
 
-            foreach (var panel in _trackerPanels)
-                panel.LoadProgress(progress);
+                string? itemWorld = null;
+                if (playerPart.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = playerPart.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2 &&
+                        string.Equals(parts[0], "Player", StringComparison.OrdinalIgnoreCase) &&
+                        int.TryParse(parts[1], out int playerNum))
+                    {
+                        itemWorld = $"World {playerNum}";
+                    }
+                }
+
+                if (itemWorld == null) continue;
+
+                if (!itemsByWorld.TryGetValue(itemWorld, out var dict))
+                {
+                    dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    itemsByWorld[itemWorld] = dict;
+                }
+                dict[cleanKey] = kv.Value;
+            }
+
+            if (itemsByWorld.Count == 0) return;
+            foreach (var (world, playerItems) in itemsByWorld)
+            {
+                var tempLog = new SpoilerLog
+                {
+                    Settings = _spoilerLog.Settings,
+                    WorldFlags = _spoilerLog.WorldFlags,
+                    Locations = _spoilerLog.Locations,
+                    StartingItems = playerItems
+                };
+
+                var tempProgress = new Dictionary<string, int>();
+                StartingItemsMapper.Apply(tempLog, tempProgress);
+                foreach (var kv in tempProgress)
+                {
+                    string key = $"{world}|{kv.Key}";
+                    if (!_sessionProgress.TryGetValue(key, out int existing) || existing < kv.Value)
+                    {
+                        _sessionProgress[key] = kv.Value;
+                    }
+                }
+                foreach (var panel in _trackerPanels)
+                {
+                    if (!string.Equals(panel.World, world, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    panel.LockStartingItems(tempProgress);
+                }
+            }
         }
+
 
         private void BtnTrackerOptions_Click(object? sender, EventArgs e)        {
             using var dlg = new TrackerOptionsForm(_currentTrackerConfig);
@@ -1754,6 +1944,20 @@ namespace OoTMMTracker.Forms
                 _currentTrackerConfig = dlg.Config;
                 SaveTrackerSettings();
                 RebuildTracker();
+                _mapLogicEvaluator = new MapLogicEvaluator(
+                    (id) =>
+                    {
+                        foreach (var panel in _trackerPanels)
+                        {
+                            var item = panel.GetItemById(id);
+                            if (item != null) return item;
+                        }
+                        return null;
+                    },
+                    (locationNames) => _foundLocations.Contains(locationNames),
+                    _currentTrackerConfig
+                );
+                UpdateMapAccessibleLocations();
             }
         }
         
@@ -1773,7 +1977,7 @@ namespace OoTMMTracker.Forms
                 _updateMapCounters?.Invoke();
                 if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
                 UpdateLocationsList(_txtSearch.Text);
-                // Refresh combo box display to update completion indicators
+                UpdateTrackerWorldFilterVisibility();
                 RefreshComboBoxDisplay();
             }
         }
@@ -1787,12 +1991,18 @@ namespace OoTMMTracker.Forms
             _lblInfo.Text = "No file loaded";
             _foundLocations.Clear();
             _songEvents.Clear();
+            if (_dgvSongEvents.Columns.Contains("Song"))
+            {
+                _dgvSongEvents.Columns["Song"].ReadOnly = false;
+            }
             _mapTrackerPanel.SetKnownLocations(new HashSet<string>());
             _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
             // Reset map region selection — clears map and counters
             if (_cmbMapRegion != null) _cmbMapRegion.SelectedIndex = 0;
             if (_cmbMapSub    != null) { _cmbMapSub.Items.Clear(); _cmbMapSub.Enabled = false; }
             // Refresh combo box display to update completion indicators
+            _coloredLocations.Clear();
+            UpdateMapColoredLocations();
             RefreshComboBoxDisplay();
             if (_cmbMapGame   != null) { _cmbMapGame.Items.Clear(); _cmbMapGame.Items.AddRange(new object[] { "All", "OoT", "MM" }); _cmbMapGame.SelectedIndex = 0; }
             _dgvLocations.Rows.Clear();
@@ -1810,8 +2020,9 @@ namespace OoTMMTracker.Forms
             _cmbRegionFilter.SelectedIndex = 0;
             if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
             _lblCounter.Text = "";
-
+            UpdateTrackerWorldFilterVisibility();
             _updateQuickJump?.Invoke();
+            RebuildTracker(resetProgress: true);
         }
 
         private void BtnResetTracker_Click(object? sender, EventArgs e)
@@ -1831,6 +2042,8 @@ namespace OoTMMTracker.Forms
             if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
             UpdateLocationsList(_txtSearch.Text);
             // Refresh combo box display to update completion indicators
+            UpdateMapColoredLocations();
+            UpdateTrackerWorldFilterVisibility();
             RefreshComboBoxDisplay();
         }
 
@@ -1838,18 +2051,12 @@ namespace OoTMMTracker.Forms
         {
             if (MessageBox.Show("Reset tracker progress?\n(Settings and starting items will be preserved)", "Confirm",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-            // Rebuild tracker with clean progress (don't touch settings)
             RebuildTracker(resetProgress: true);
-            // Apply starting items from current log
-            if (_spoilerLog != null)
-                ApplyStartingItems();
-            // Reset found locations
             _foundLocations.Clear();
             _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
             _updateMapCounters?.Invoke();
             if (_cmbFoundFilter != null) _cmbFoundFilter.SelectedIndex = 0;
             UpdateLocationsList(_txtSearch.Text);
-            // Refresh combo box display to update completion indicators
             RefreshComboBoxDisplay();
         }
 
@@ -1865,13 +2072,16 @@ namespace OoTMMTracker.Forms
 
             try
             {
-                var progress = new Dictionary<string, int>();
                 foreach (var panel in _trackerPanels)
-                    panel.SaveProgress(progress);
-
+                    panel.SaveProgress(_sessionProgress);
+                var progress = _sessionProgress;
+                foreach (var kv in progress)
+                {
+                    _sessionProgress[kv.Key] = kv.Value;
+                }
                 var save = new TrackerSaveData
                 {
-                    Progress = progress,
+                    Progress = new Dictionary<string, int>(_sessionProgress),
                     SpoilerLogPath = _currentSpoilerLogPath ?? "",
                     BombchuBehaviorOot = _currentTrackerConfig.BombchuBehaviorOot,
                     BombchuBehaviorMm  = _currentTrackerConfig.BombchuBehaviorMm,
@@ -1920,9 +2130,23 @@ namespace OoTMMTracker.Forms
                 }
 
                 // Restore progress
+                _sessionProgress.Clear();
                 MigrateBottleIds(save.Progress);
+                foreach (var kv in save.Progress)
+                {
+                    string key = kv.Key;
+                    if (key.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parts = key.Split(new[] { ' ' }, 3, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length >= 2 && int.TryParse(parts[1], out int playerNum))
+                        {
+                            key = $"World {playerNum}|{parts[2]}";
+                        }
+                    }
+                    _sessionProgress[key] = kv.Value;
+                }
                 foreach (var panel in _trackerPanels)
-                    panel.LoadProgress(save.Progress);
+                    panel.LoadProgress(_sessionProgress);
 
                 // Restore found locations
                 _foundLocations.Clear();
@@ -1943,10 +2167,6 @@ namespace OoTMMTracker.Forms
                 _updateMapCounters?.Invoke();
                 // Refresh combo box display to update completion indicators
                 RefreshComboBoxDisplay();
-
-                // Re-apply starting items (they should be locked)
-                if (_spoilerLog != null)
-                    ApplyStartingItems();
 
                 MessageBox.Show("Progress loaded!", "Load", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -2038,7 +2258,7 @@ namespace OoTMMTracker.Forms
                 LoadSpoilerLog(files[0]);
             }
         }
-        
+
         private void LoadSpoilerLog(string filePath)
         {
             try
@@ -2046,60 +2266,68 @@ namespace OoTMMTracker.Forms
                 _currentSpoilerLogPath = filePath;
                 SpoilerLogParser.Validate(filePath);
                 _spoilerLog = _parser.Parse(filePath);
+                BuildLocationCache();
+                _locationsByWorld.Clear();
+                foreach (var loc in _spoilerLog.Locations.Values)
+                {
+                    string world = loc.World;
+                    if (!_locationsByWorld.ContainsKey(world))
+                        _locationsByWorld[world] = new HashSet<string>();
+                    string locWithoutWorld = loc.Location;
+                    if (loc.Location.StartsWith("World "))
+                    {
+                        var parts = loc.Location.Split(new[] { ' ' }, 3);
+                        if (parts.Length >= 3)
+                            locWithoutWorld = parts[2];
+                    }
+                    _locationsByWorld[world].Add(locWithoutWorld);
+                }
                 var seedPreview = _spoilerLog.Seed.Length > 16 ? _spoilerLog.Seed.Substring(0, 16) + "..." : _spoilerLog.Seed;
                 var fileName = Path.GetFileName(filePath);
                 _lblInfo.Text = $"{fileName} | {_spoilerLog.Version} | Seed: {seedPreview} | Locations: {_spoilerLog.Locations.Count} | Entrances: {_spoilerLog.Entrances.Count}";
-                
-                // Reset filters to "All"
                 _cmbGameFilter.SelectedIndex = 0;
-                
-                // Populate region list
-                PopulateRegionFilter();
-                
-                // Enable game filter only if both games are present
                 bool hasOot = _spoilerLog.Locations.Values.Any(l => l.Game == "OOT");
-                bool hasMm  = _spoilerLog.Locations.Values.Any(l => l.Game == "MM");
+                bool hasMm = _spoilerLog.Locations.Values.Any(l => l.Game == "MM");
                 _cmbGameFilter.Enabled = hasOot && hasMm;
-                if (!_cmbGameFilter.Enabled) _cmbGameFilter.SelectedIndex = 0; // Reset to "All" if disabled
-                
+                if (!_cmbGameFilter.Enabled) _cmbGameFilter.SelectedIndex = 0;
+                UpdateWorldFilterVisibility();
+                _currentTrackerConfig = TrackerConfig.FromSpoilerLog(_spoilerLog);
+                UpdateTrackerConfigForCurrentWorld();
+                _mapLogicEvaluator = new MapLogicEvaluator(
+                    (id) =>
+                    {
+                        foreach (var panel in _trackerPanels)
+                        {
+                            var item = panel.GetItemById(id);
+                            if (item != null) return item;
+                        }
+                        return null;
+                    },
+                    (locationName) =>
+                    {
+                        return _foundLocations.Any(fl => fl.EndsWith($"|{locationName}", StringComparison.OrdinalIgnoreCase));
+                    },
+                    _currentTrackerConfig);
+                _foundLocations.Clear();
+                _sessionProgress.Clear();
+                PopulateRegionFilter();
                 UpdateLocationsList();
+                UpdateWorldFlagsList();
+                UpdateEntrancesList();
                 UpdateSettingsList();
                 UpdateTricksList();
                 UpdateStartingItemsList();
-                UpdateWorldFlagsList();
                 UpdateSpecialConditionsList();
-                UpdateEntrancesList();
-
-                // Update tracker to match spoiler log settings
-                _currentTrackerConfig = TrackerConfig.FromSpoilerLog(_spoilerLog);
-                // Save Bombchu from log to file (to remember it)
-                SaveTrackerSettings();
-
-                // Reset and populate song events (after config update)
                 _songEvents.Clear();
+                var knownLocs = new HashSet<string>(
+                    _spoilerLog.Locations.Values.Select(l => $"{l.World}|{l.Game}|{l.Location}")
+                );
                 LoadSongEventsFromLog();
                 PopulateSongEvents();
-
-                // Reset progress — new log, new game
-                _foundLocations.Clear();
-                RebuildTracker(resetProgress: true);
-                // Apply bottles from log locations
-                ApplyBottlesFromLog();
-                // Apply starting items
-                ApplyStartingItems();
-
-                // Update map with known locations from log
-                var knownLocs = new HashSet<string>(
-                    _spoilerLog.Locations.Values.Select(l => $"{l.Game}|{l.Location}"));
                 _knownLocations = knownLocs;
                 _mapTrackerPanel.SetKnownLocations(knownLocs);
                 _mapTrackerPanel.SetSpoilerLog(_spoilerLog);
                 _mapTrackerPanel.UpdateFoundLocations(_foundLocations);
-                UpdateMapColoredLocations();
-                _updateMapCounters?.Invoke();
-                RefreshComboBoxDisplay();
-
-                // Restrict map game filter based on loaded game mode
                 _cmbMapGame.Items.Clear();
                 if (_currentTrackerConfig.HasOot && _currentTrackerConfig.HasMm)
                     _cmbMapGame.Items.AddRange(new object[] { "All", "OoT", "MM" });
@@ -2108,34 +2336,154 @@ namespace OoTMMTracker.Forms
                 else
                     _cmbMapGame.Items.AddRange(new object[] { "MM" });
                 _cmbMapGame.SelectedIndex = 0;
+                UpdateMapWorldFilterVisibility();
+                if (_cmbMapWorld.Items.Count <= 1)
+                {
+                    _cmbMapWorld.SelectedIndex = 0;
+                }
+                _cmbTrackerWorldFilter.Items.Clear();
+                var worldsForTracker = _spoilerLog.Locations.Values
+                    .Select(l => l.World)
+                    .Where(w => !string.IsNullOrEmpty(w))
+                    .Distinct()
+                    .OrderBy(w => w, new NaturalStringComparer())
+                    .ToList();
 
+                foreach (var w in worldsForTracker)
+                    _cmbTrackerWorldFilter.Items.Add(w);
+
+                if (_cmbTrackerWorldFilter.Items.Count > 0)
+                    _cmbTrackerWorldFilter.SelectedIndex = 0;
+                UpdateMapWorldFilter();
+                UpdateMapColoredLocations();
+                _updateMapCounters?.Invoke();
+                UpdateTrackerWorldFilterVisibility();
+                RefreshComboBoxDisplay();
+                SaveTrackerSettings();
                 _updateQuickJump?.Invoke();
+                if (_cmbTrackerWorldFilter.Items.Count > 0)
+                    _cmbTrackerWorldFilter.SelectedIndex = 0;
+                RebuildTracker(resetProgress: true);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
+
+        private void UpdateMapAccessibleLocations()
+        {
+            if (_mapLogicEvaluator == null || _mapTrackerPanel == null) return;
+            string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+
+            var accessibleLocations = new HashSet<string>();
+            var accessibleEntrances = new HashSet<string>();
+            var currentRegion = _cmbMapRegion.SelectedItem as Models.MapRegion;
+            if (currentRegion == null) return;
+
+            foreach (var subRegion in currentRegion.SubRegions)
+            {
+                foreach (var mark in subRegion.Marks)
+                {
+                    foreach (var loc in mark.LocationNames)
+                    {
+                        if (_mapLogicEvaluator.CanAccessLocation(loc))
+                        {
+                            accessibleLocations.Add($"{currentWorld}|{currentRegion.Game}|{loc}");
+                        }
+                    }
+
+                    if (mark.IsEntranceShuffleMark && !string.IsNullOrEmpty(mark.EntranceFromId))
+                    {
+                        if (_mapLogicEvaluator.CanAccessEntrance(mark.EntranceFromId))
+                        {
+                            accessibleEntrances.Add(mark.EntranceFromId);
+                        }
+                    }
+                }
+            }
+            _mapTrackerPanel.SetAccessibleLocations(accessibleLocations, currentWorld);
+            _mapTrackerPanel.SetAccessibleEntrances(accessibleEntrances, currentWorld);
+        }
+
         private void RefreshComboBoxDisplay()
         {
             _cmbMapRegion?.Invalidate();
             _cmbMapSub?.Invalidate();
         }
-
-        private void UpdateLocationsList(string? searchText = null)
+        private void UpdateMapWorldFilter()
         {
-            _dgvLocations.SuspendLayout();
-            _dgvLocations.Rows.Clear();
-            
+            if (_cmbMapWorld == null || _spoilerLog == null) return;
+            string? selectedWorld = _cmbMapWorld.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedWorld)) return;
+            UpdateMapMarkersForWorld(selectedWorld);
+            _mapTrackerPanel.SetCurrentWorld(selectedWorld);
+            UpdateSubRegionsList();
+            UpdateMapAccessibleLocations();
+            _updateMapCounters?.Invoke();
+            _mapTrackerPanel.Invalidate();
+        }
+
+        private void UpdateMapMarkersForWorld(string world)
+        {
+            if (_mapTrackerPanel == null || _spoilerLog == null) return;
+
+            var worldLocations = new HashSet<string>();
+            foreach (var loc in _spoilerLog.Locations.Values)
+            {
+                if (world != null && loc.World != world)
+                    continue;
+                worldLocations.Add($"{loc.World}|{loc.Game}|{loc.Location}");
+            }
+            _mapTrackerPanel.SetKnownLocations(worldLocations);
+        }
+        private void UpdateMapWorldFilterVisibility()
+        {
+            if (_cmbMapWorld == null) return;
+
             if (_spoilerLog == null)
             {
+                _cmbMapWorld.Visible = false;
+                return;
+            }
+
+            var worlds = _spoilerLog.Locations.Values
+                .Select(l => l.World)
+                .Where(w => !string.IsNullOrEmpty(w))
+                .Distinct()
+                .OrderBy(w => w, new NaturalStringComparer())
+                .ToList();
+
+            if (worlds.Count > 1)
+            {
+                _cmbMapWorld.Items.Clear();
+                foreach (var world in worlds)
+                    _cmbMapWorld.Items.Add(world);
+                _cmbMapWorld.SelectedIndex = 0;
+                _cmbMapWorld.Visible = true;
+            }
+            else
+            {
+                _cmbMapWorld.Items.Clear();
+                _cmbMapWorld.Items.Add(worlds.FirstOrDefault() ?? "World 1");
+                _cmbMapWorld.SelectedIndex = 0;
+                _cmbMapWorld.Visible = false;
+            }
+        }
+        private void UpdateLocationsList(string? searchText = null)
+        {
+            if (_spoilerLog == null)
+            {
+                _dgvLocations.SuspendLayout();
+                _dgvLocations.Rows.Clear();
                 _dgvLocations.ResumeLayout();
                 return;
             }
 
-            // Pre-compute filter values once
             string? search = string.IsNullOrWhiteSpace(searchText) ? null : searchText.ToLower();
+            string? worldFilter = (_cmbWorldFilter.Visible && _cmbWorldFilter.SelectedIndex > 0)
+                ? _cmbWorldFilter.SelectedItem?.ToString()
+                : null;
             string? gameFilter = _cmbGameFilter.SelectedIndex > 0
                 ? (_cmbGameFilter.SelectedItem?.ToString() == "OoT" ? "OOT" : _cmbGameFilter.SelectedItem?.ToString())
                 : null;
@@ -2144,38 +2492,56 @@ namespace OoTMMTracker.Forms
                 : null;
             int statusFilter = _cmbFoundFilter?.SelectedIndex ?? 0;
 
-            // Single-pass filter + sort
-            var filtered = _spoilerLog.Locations.Values
-                .Where(l =>
-                    (search == null || l.Location.ToLower().Contains(search) || l.Item.ToLower().Contains(search)) &&
-                    (gameFilter == null || l.Game == gameFilter) &&
-                    (regionFilter == null || l.Region == regionFilter))
-                .OrderBy(l => l.Region)
-                .ThenBy(l => l.Location);
+            var newRows = new List<(bool found, string world, string game, string region, string location, string item, string key)>();
 
-            // Batch add rows
-            _dgvLocations.SuspendLayout();
-            foreach (var location in filtered)
+            foreach (var l in _spoilerLog.Locations.Values)
             {
-                var key = $"{location.Game}|{location.Location}";
+                if (search != null &&
+                    !l.Location.ToLower().Contains(search) &&
+                    !l.Item.ToLower().Contains(search))
+                    continue;
+                if (worldFilter != null && l.World != worldFilter) continue;
+                if (gameFilter != null && l.Game != gameFilter) continue;
+                if (regionFilter != null && l.Region != regionFilter) continue;
+
+                var key = $"{l.World}|{l.Game}|{l.Location}";
                 bool found = _foundLocations.Contains(key);
-                if (statusFilter == 1 && found)  continue;
+                if (statusFilter == 1 && found) continue;
                 if (statusFilter == 2 && !found) continue;
-                _dgvLocations.Rows.Add(found, location.Game, location.Region, location.Location, location.Item);
+
+                newRows.Add((found, l.World, l.Game, l.Region, l.Location, l.Item, key));
+            }
+
+            newRows.Sort((a, b) =>
+            {
+                int cmp = string.Compare(a.world, b.world, StringComparison.OrdinalIgnoreCase);
+                if (cmp != 0) return cmp;
+                cmp = string.Compare(a.region, b.region, StringComparison.OrdinalIgnoreCase);
+                if (cmp != 0) return cmp;
+                return string.Compare(a.location, b.location, StringComparison.OrdinalIgnoreCase);
+            });
+
+            _dgvLocations.SuspendLayout();
+            _dgvLocations.Rows.Clear();
+            foreach (var r in newRows)
+            {
+                var rowIndex = _dgvLocations.Rows.Add(r.found, r.world, r.game, r.region, r.location, r.item);
+                _dgvLocations.Rows[rowIndex].Tag = r.key;
             }
             _dgvLocations.ResumeLayout();
 
-            // Update counter
-            int total    = _dgvLocations.Rows.Count;
-            int checked_ = _dgvLocations.Rows.Cast<DataGridViewRow>().Count(r => r.Cells[0].Value is true);
+            int total = _dgvLocations.Rows.Count;
+            int checked_ = 0;
+            for (int i = 0; i < _dgvLocations.Rows.Count; i++)
+                if (_dgvLocations.Rows[i].Cells[0].Value is true) checked_++;
+
             if (_lblCounter != null)
                 _lblCounter.Text = $"{checked_}/{total} checked";
-
-            _dgvLocations.ResumeLayout();
         }
 
+
         private static string LocationKey(DataGridViewRow row)
-            => $"{row.Cells[1].Value}|{row.Cells[3].Value}";
+        => row.Tag?.ToString() ?? "";
 
         private void DgvLocations_DirtyStateChanged(object? sender, EventArgs e)
         {
@@ -2198,6 +2564,7 @@ namespace OoTMMTracker.Forms
             ApplyRowColor(row, isChecked);
             // Update map marks
             _mapTrackerPanel?.UpdateFoundLocations(_foundLocations);
+            UpdateMapAccessibleLocations();
             // Update counter
             int total    = _dgvLocations.Rows.Count;
             int checked_ = _dgvLocations.Rows.Cast<DataGridViewRow>().Count(r => r.Cells[0].Value is true);
@@ -2212,11 +2579,11 @@ namespace OoTMMTracker.Forms
 
         private void DgvLocations_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex == 0) return; // don't color checkbox
+            if (e.RowIndex < 0 || e.ColumnIndex == 0) return;
             var row = _dgvLocations.Rows[e.RowIndex];
             var key = LocationKey(row);
             bool found = _foundLocations.Contains(key);
-            var item = row.Cells[4].Value?.ToString() ?? "";
+            var item = row.Cells[5].Value?.ToString() ?? "";
 
             if (found)
             {
@@ -2244,56 +2611,45 @@ namespace OoTMMTracker.Forms
                 e.CellStyle.BackColor = _dgvLocations.DefaultCellStyle.BackColor;
                 e.CellStyle.ForeColor = _dgvLocations.DefaultCellStyle.ForeColor;
             }
-            // Keep selection color same as row color (no blue highlight)
+
             e.CellStyle.SelectionBackColor = e.CellStyle.BackColor;
             e.CellStyle.SelectionForeColor = e.CellStyle.ForeColor;
         }
 
-        private static bool IsTrap(string item) =>
-            item.Contains("Trap", StringComparison.OrdinalIgnoreCase);
+        private static bool IsTrap(string item)
+        {
+            string cleanItem = GetCleanItemName(item);
+            return cleanItem.Contains("Trap", StringComparison.OrdinalIgnoreCase);
+        }
 
         private static bool IsConsumable(string item)
         {
             if (string.IsNullOrEmpty(item)) return false;
-            var lower = item.ToLower();
-
-            // Starts with a number (e.g. "10 Arrows", "5 Bombs", "10 Deku Nuts") — but NOT upgrades
-            if (System.Text.RegularExpressions.Regex.IsMatch(item, @"^\d+\s") &&
+            string cleanItem = GetCleanItemName(item);
+            string lower = cleanItem.ToLower();
+            if (System.Text.RegularExpressions.Regex.IsMatch(cleanItem, @"^\d+\s") &&
                 !lower.Contains("upgrade") && !lower.Contains("bag"))
                 return true;
-
-            // Rupees — but NOT Silver Rupees with dungeon names (they are dungeon items)
-            // "Silver Rupee (MM)" and "Silver Rupee (OoT)" are regular rupees
             if (System.Text.RegularExpressions.Regex.IsMatch(lower, @"^(green|blue|red|purple|huge|gold)?\s*rupee"))
                 return true;
             if (lower.StartsWith("silver rupee") &&
                 (lower.Contains("(mm)") || lower.Contains("(oot)") || !lower.Contains("(")))
                 return true;
-
-            // Hearts / Magic
             if (lower.StartsWith("recovery heart") ||
                 lower.StartsWith("small magic jar") ||
                 lower.StartsWith("large magic jar"))
                 return true;
-
-            // Fairy (but not "Fairy Bow", "Fairy Slingshot", "Fairy Ocarina", "Fairy Sword", "Bottled Fairy")
             if (lower.StartsWith("fairy") &&
                 !lower.Contains("bow") && !lower.Contains("slingshot") &&
                 !lower.Contains("ocarina") && !lower.Contains("sword") && !lower.Contains("mask"))
                 return true;
             if (lower.StartsWith("big fairy"))
                 return true;
-
-            // Bombs/Bombchu — only consumable packs, not Bomb Bag or Bombchu Bag
             if ((lower.StartsWith("bomb") || lower.StartsWith("bombchu")) &&
                 !lower.Contains("bag") && !lower.Contains("upgrade"))
                 return true;
-
-            // Deku Sticks — only consumable, not upgrade
             if (lower.StartsWith("deku stick") && !lower.Contains("upgrade"))
                 return true;
-
-            // Bottle contents — only loose items, NOT "Bottle of..." or "Bottled..." (those are the bottles themselves)
             if (lower.StartsWith("blue fire") || lower.StartsWith("blue potion") ||
                 lower.StartsWith("red potion") || lower.StartsWith("green potion") ||
                 lower.StartsWith("chateau romani refill") ||
@@ -2302,28 +2658,46 @@ namespace OoTMMTracker.Forms
                 lower.StartsWith("spring water") || lower.StartsWith("hot spring water") ||
                 lower.StartsWith("milk refill") || lower.StartsWith("lon lon milk"))
                 return true;
-
-            // Milk (not bottled)
             if (lower.StartsWith("lon lon milk") || lower == "romani milk")
                 return true;
-
-            // Nothing
             if (lower == "nothing") return true;
 
             return false;
         }
-
+        private static string GetCleanItemName(string item)
+        {
+            if (string.IsNullOrEmpty(item)) return "";
+            return System.Text.RegularExpressions.Regex.Replace(item, @"^Player\s+\d+\s+", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+        private string GetCleanPlayerItemName(string rawName)
+        {
+            if (string.IsNullOrEmpty(rawName)) return "";
+            return System.Text.RegularExpressions.Regex.Replace(
+                rawName,
+                @"^Player\s+\d+\s+",
+                "",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
+        }
         private void UpdateMapColoredLocations()
         {
-            if (_spoilerLog == null) return;
-            var colored = new HashSet<string>();
-            foreach (var loc in _spoilerLog.Locations.Values)
-                if (IsTrap(loc.Item) || IsConsumable(loc.Item))
-                    colored.Add($"{loc.Game}|{loc.Location}");
+            if (_mapTrackerPanel == null) return;
+
+            var colored = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (_spoilerLog != null)
+            {
+                foreach (var loc in _spoilerLog.Locations.Values)
+                {
+                    if (IsTrap(loc.Item) || IsConsumable(loc.Item))
+                    {
+                        colored.Add($"{loc.World}|{loc.Game}|{loc.Location}");
+                    }
+                }
+            }
+
             _coloredLocations = colored;
             _mapTrackerPanel.SetColoredLocations(colored);
-            // Refresh combo box display as colored locations affect completion counts
-            RefreshComboBoxDisplay();
         }
 
         private static void ApplyRowColor(DataGridViewRow row, bool found)
@@ -2339,42 +2713,132 @@ namespace OoTMMTracker.Forms
                 row.DefaultCellStyle.ForeColor = Color.Empty;
             }
         }
-        
+        private void UpdateWorldFilterVisibility()
+        {
+            if (_spoilerLog == null) return;
+
+            var worlds = _spoilerLog.Locations.Values
+                .Select(l => l.World)
+                .Where(w => !string.IsNullOrEmpty(w))
+                .Distinct()
+                .OrderBy(w => w)
+                .ToList();
+
+            bool isMultiworld = worlds.Count > 1;
+
+            if (isMultiworld)
+            {
+                _cmbWorldFilter.Items.Clear();
+                _cmbWorldFilter.Items.Add("All Worlds");
+                foreach (var world in worlds)
+                    _cmbWorldFilter.Items.Add(world);
+                _cmbWorldFilter.SelectedIndex = 0;
+                _cmbWorldFilter.Visible = true;
+            }
+            else
+            {
+                _cmbWorldFilter.Visible = false;
+            }
+        }
+        private static (string World, string CleanLocation, string CleanRegion) ParseWorldInfo(string location, string region)
+        {
+            string world = "World 1";
+            string cleanLoc = location;
+            string cleanReg = region;
+
+            if (location.StartsWith("World "))
+            {
+                var parts = location.Split(new[] { ' ' }, 3);
+                if (parts.Length >= 2 && int.TryParse(parts[1], out int worldNum))
+                {
+                    world = $"World {worldNum}";
+                    cleanLoc = parts.Length == 3 ? parts[2] : location;
+                }
+            }
+
+            if (region.StartsWith("World "))
+            {
+                var parts = region.Split(new[] { ' ' }, 3);
+                if (parts.Length >= 2 && int.TryParse(parts[1], out _))
+                {
+                    cleanReg = parts.Length == 3 ? parts[2] : region;
+                }
+            }
+
+            return (world, cleanLoc, cleanReg);
+        }
+
+        private string? GetSettingValue(string key)
+        {
+            if (_spoilerLog == null) return null;
+
+            string currentWorld = _cmbTrackerWorldFilter?.SelectedItem?.ToString() ?? "World 1";
+            if (string.IsNullOrEmpty(currentWorld)) currentWorld = "World 1";
+
+            string worldPrefix = $"{currentWorld} ";
+
+            if (_spoilerLog.WorldFlags.TryGetValue(worldPrefix + key, out var worldVal))
+                return worldVal;
+
+            if (_spoilerLog.Settings.TryGetValue(key, out var settingVal))
+                return settingVal;
+
+            if (_spoilerLog.WorldFlags.TryGetValue(key, out var generalVal))
+                return generalVal;
+
+            return null;
+        }
+        private class NaturalStringComparer : IComparer<string>
+        {
+            public int Compare(string x, string y)
+            {
+                if (x == null && y == null) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            }
+        }
         private void PopulateRegionFilter()
         {
-            if (_spoilerLog == null)
-                return;
-            
+            if (_spoilerLog == null) return;
+
             _cmbRegionFilter.Items.Clear();
             _cmbRegionFilter.Items.Add("All Regions");
-            
+
             var locations = _spoilerLog.Locations.Values.AsEnumerable();
-            
-            // Filter regions by selected game
+
             if (_cmbGameFilter.SelectedIndex > 0)
             {
                 var selectedGame = _cmbGameFilter.SelectedItem?.ToString();
                 if (!string.IsNullOrEmpty(selectedGame))
                 {
-                    // Game in log is "OOT" or "MM", but combo shows "OoT" or "MM"
                     var gameToMatch = selectedGame == "OoT" ? "OOT" : selectedGame;
                     locations = locations.Where(l => l.Game == gameToMatch);
                 }
             }
-            
+
             var regions = locations
-                .Select(l => l.Region)
+                .Select(l =>
+                {
+                    if (l.Region.StartsWith("World "))
+                    {
+                        var parts = l.Region.Split(new[] { ' ' }, 3);
+                        if (parts.Length >= 2 && int.TryParse(parts[1], out _))
+                            return parts.Length == 3 ? parts[2] : l.Region;
+                    }
+                    return l.Region;
+                })
                 .Distinct()
                 .OrderBy(r => r);
-            
+
             foreach (var region in regions)
             {
                 _cmbRegionFilter.Items.Add(region);
             }
-            
+
             _cmbRegionFilter.SelectedIndex = 0;
         }
-        
+
         private void CmbRegionFilter_SelectedIndexChanged(object? sender, EventArgs e)
         {
             UpdateLocationsList(_txtSearch.Text);
@@ -2384,7 +2848,95 @@ namespace OoTMMTracker.Forms
         {
             UpdateLocationsList(_txtSearch.Text);
         }
-        
+        private void UpdateTrackerConfigForCurrentWorld()
+        {
+            if (_spoilerLog == null) return;
+
+            string currentWorld = _cmbTrackerWorldFilter?.SelectedItem?.ToString() ?? "World 1";
+
+            // Очищаем старые списки
+            _currentTrackerConfig.MqDungeons.Clear();
+            _currentTrackerConfig.SrPouchPacks.Clear();
+
+            // Ищем WorldFlags для текущего мира
+            string mqKey = $"{currentWorld} Master Quest Dungeons";
+            if (_spoilerLog.WorldFlags.TryGetValue(mqKey, out var mqValue)
+                && !string.IsNullOrEmpty(mqValue)
+                && mqValue != "none"
+                && mqValue != "all")
+            {
+                // Парсим список MQ-данжей
+                var mqDungeons = mqValue.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var name in mqDungeons)
+                {
+                    string id = MapDungeonNameToId(name.Trim());
+                    if (id != null) _currentTrackerConfig.MqDungeons.Add(id);
+                }
+            }
+            else if (mqValue == "all")
+            {
+                // Все данжи - MQ
+                foreach (var id in new[] { "deku_tree", "dodongo", "jabu", "forest_temple", "fire_temple",
+                                  "water_temple", "shadow_temple", "spirit_temple", "botw", "ice_cavern", "gtg", "ganons_castle" })
+                    _currentTrackerConfig.MqDungeons.Add(id);
+            }
+
+            // Silver Rupee Pouches (по аналогии)
+            string srKey = $"{currentWorld} Silver Rupee Pouches";
+            if (_spoilerLog.WorldFlags.TryGetValue(srKey, out var srValue)
+                && !string.IsNullOrEmpty(srValue)
+                && srValue != "none")
+            {
+                // Простая реализация - "all" = все пакеты
+                if (srValue == "all")
+                {
+                    // Добавляем пакеты для немек MQ
+                    foreach (var dId in new[] { "shadow_temple", "spirit_temple", "ice_cavern", "botw", "gtg", "ganons_castle" })
+                    {
+                        if (!_currentTrackerConfig.MqDungeons.Contains(dId))
+                        {
+                            foreach (var pId in GetVanillaPacks(dId))
+                                _currentTrackerConfig.SrPouchPacks.Add($"{dId}_{pId}");
+                        }
+                    }
+                }
+                // Иначе - кастомный список
+            }
+        }
+
+        private string? MapDungeonNameToId(string name)
+        {
+            return name.ToLower().Replace("'s", "").Replace("'", "").Trim() switch
+            {
+                "deku tree" => "deku_tree",
+                "dodongo cavern" => "dodongo",
+                "inside jabu-jabu" => "jabu",
+                "forest temple" => "forest_temple",
+                "fire temple" => "fire_temple",
+                "water temple" => "water_temple",
+                "shadow temple" => "shadow_temple",
+                "spirit temple" => "spirit_temple",
+                "bottom of the well" => "botw",
+                "ice cavern" => "ice_cavern",
+                "gerudo training ground" => "gtg",
+                "gerudo training grounds" => "gtg",
+                "ganon castle" => "ganons_castle",
+                "ganons castle" => "ganons_castle",
+                _ => null
+            };
+        }
+
+        private string[] GetVanillaPacks(string dungeonId) => dungeonId switch
+        {
+            "shadow_temple" => new[] { "scythe", "pit", "spikes" },
+            "spirit_temple" => new[] { "child", "sun", "boulders" },
+            "ice_cavern" => new[] { "scythe", "block" },
+            "botw" => new[] { "basement" },
+            "gtg" => new[] { "slopes", "lava", "water" },
+            "ganons_castle" => new[] { "spirit", "light", "fire", "forest" },
+            _ => new string[0]
+        };
+
         private void UpdateSettingsList()
         {
             _dgvSettings.Rows.Clear();
@@ -2418,33 +2970,146 @@ namespace OoTMMTracker.Forms
                 }
             }
         }
-        
+
         private void UpdateStartingItemsList()
         {
             _dgvStartingItems.Rows.Clear();
-            
-            if (_spoilerLog == null)
-                return;
-            
-            foreach (var item in _spoilerLog.StartingItems.OrderBy(i => i.Key))
+            if (_spoilerLog == null) return;
+
+            string currentWorld = _cmbTrackerWorldFilter?.SelectedItem?.ToString() ?? "World 1";
+            string currentPlayer = currentWorld.Replace("World", "Player");
+
+            string? worldFilter = (_cmbWorldFilter.Visible && _cmbWorldFilter.SelectedIndex > 0)
+                ? _cmbWorldFilter.SelectedItem?.ToString()
+                : null;
+
+            foreach (var kv in _spoilerLog.StartingItems.OrderBy(k => k.Key))
             {
-                _dgvStartingItems.Rows.Add(item.Key, item.Value);
+                string key = kv.Key;
+                string value = kv.Value;
+                string playerName = "";
+                string itemName = key;
+                string itemWorld = "";
+
+                string playerPart = key;
+                if (key.Contains(':'))
+                {
+                    var colonParts = key.Split(new[] { ':' }, 2);
+                    playerPart = colonParts[0].Trim();
+                    itemName = colonParts[1].Trim();
+                }
+
+                if (playerPart.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = playerPart.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2 &&
+                        string.Equals(parts[0], "Player", StringComparison.OrdinalIgnoreCase) &&
+                        int.TryParse(parts[1], out int playerNum))
+                    {
+                        playerName = $"Player {playerNum}";
+                        itemWorld = $"World {playerNum}";
+                    }
+                }
+
+                if (worldFilter != null && itemWorld != worldFilter)
+                    continue;
+
+                if (string.IsNullOrEmpty(playerName)) playerName = "?";
+
+                _dgvStartingItems.Rows.Add(playerName, itemName, value);
             }
         }
-        
+
+
+
+
         private void UpdateWorldFlagsList()
         {
             _dgvWorldFlags.Rows.Clear();
-            
-            if (_spoilerLog == null)
-                return;
-            
-            foreach (var flag in _spoilerLog.WorldFlags.OrderBy(f => f.Key))
+            if (_spoilerLog == null) return;
+
+            string? worldFilter = (_cmbWorldFilter.Visible && _cmbWorldFilter.SelectedIndex > 0)
+                ? _cmbWorldFilter.SelectedItem?.ToString()
+                : null;
+
+            var flags = new List<(string World, string Key, string Value)>();
+
+            foreach (var kvp in _spoilerLog.WorldFlags)
             {
-                _dgvWorldFlags.Rows.Add(flag.Key, flag.Value);
+                string world = "World 1";
+                string flagName = kvp.Key;
+                if (kvp.Key.StartsWith("World "))
+                {
+                    int firstSpace = kvp.Key.IndexOf(' ');
+                    int secondSpace = kvp.Key.IndexOf(' ', firstSpace + 1);
+                    if (secondSpace > 0)
+                    {
+                        world = kvp.Key.Substring(0, secondSpace);
+                        flagName = kvp.Key.Substring(secondSpace + 1).Trim();
+                    }
+                }
+
+                flags.Add((world, flagName, kvp.Value));
+            }
+
+            var filtered = flags
+                .Where(f => worldFilter == null || f.World == worldFilter)
+                .OrderBy(f => f.World)
+                .ThenBy(f => f.Key);
+
+            foreach (var flag in filtered)
+            {
+                string displayValue = string.IsNullOrWhiteSpace(flag.Value) ? "None" : flag.Value;
+                _dgvWorldFlags.Rows.Add(flag.World, flag.Key, displayValue);
             }
         }
-        
+        private void UpdateSubRegionsList()
+        {
+            if (_cmbMapRegion.SelectedItem is not Models.MapRegion region) return;
+            string selectedSubName = (_cmbMapSub.SelectedItem as Models.MapSubRegion)?.Name;
+
+            _cmbMapSub.Items.Clear();
+            _cmbMapSub.Enabled = false;
+
+            string currentWorld = _cmbMapWorld?.SelectedItem?.ToString() ?? "World 1";
+
+            foreach (var sub in region.SubRegions)
+            {
+                if (sub.RequiredSettingKey != null)
+                {
+                    string? val = GetSettingValue(sub.RequiredSettingKey);
+                    if (val == null) continue;
+
+                    bool matches = string.Equals(val, sub.RequiredSettingValue, StringComparison.OrdinalIgnoreCase);
+                    if (!matches && sub.RequiredSettingContains != null)
+                    {
+                        var parts = val.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
+                        matches = parts.Any(p => string.Equals(p.Trim(), sub.RequiredSettingContains, StringComparison.OrdinalIgnoreCase));
+                    }
+                    if (!matches) continue;
+                }
+                _cmbMapSub.Items.Add(sub);
+            }
+
+            if (_cmbMapSub.Items.Count > 0)
+            {
+                _cmbMapSub.Enabled = true;
+                int restoredIndex = -1;
+                for (int i = 0; i < _cmbMapSub.Items.Count; i++)
+                {
+                    if (_cmbMapSub.Items[i] is Models.MapSubRegion s && s.Name == selectedSubName)
+                    {
+                        restoredIndex = i;
+                        break;
+                    }
+                }
+                _cmbMapSub.SelectedIndex = restoredIndex != -1 ? restoredIndex : 0;
+            }
+            else
+            {
+                _cmbMapSub.SelectedIndex = -1;
+            }
+        }
         private void UpdateSpecialConditionsList()
         {
             _dgvSpecialConditions.Rows.Clear();
@@ -2472,7 +3137,7 @@ namespace OoTMMTracker.Forms
                 }
             }
         }
-        
+
         // Mapping from spoiler log event names to tracker location names
         private static readonly Dictionary<string, string> SongEventNameMapping = new()
         {
@@ -2582,93 +3247,152 @@ namespace OoTMMTracker.Forms
         private void PopulateSongEvents()
         {
             if (_dgvSongEvents == null) return;
-            
             _dgvSongEvents.Rows.Clear();
 
-            // Determine if shuffle is enabled for each game
             bool ootShuffleEnabled = _currentTrackerConfig.HasOot && _currentTrackerConfig.SongEventsShuffleOot;
             bool mmShuffleEnabled = _currentTrackerConfig.HasMm && _currentTrackerConfig.SongEventsShuffleMm;
-            
-            // Ensure column exists before accessing it
+
             if (_dgvSongEvents.Columns.Contains("Song"))
+                _dgvSongEvents.Columns["Song"].ReadOnly = false;
+
+            string? worldFilter = (_cmbWorldFilter.Visible && _cmbWorldFilter.SelectedIndex > 0)
+                ? _cmbWorldFilter.SelectedItem?.ToString()
+                : null;
+
+            if (_spoilerLog == null || _songEvents.Count == 0)
             {
-                _dgvSongEvents.Columns["Song"].ReadOnly = true;
+                AddSongEventBlock("", worldFilter, ootShuffleEnabled, mmShuffleEnabled);
+                return;
             }
 
-            // Always show OoT locations regardless of game configuration
-            foreach (var kv in OotSongEventDefaults)
+            var worlds = _songEvents.Keys
+                .Where(k => k.StartsWith("World ", StringComparison.OrdinalIgnoreCase))
+                .Select(k =>
+                {
+                    int firstSpace = k.IndexOf(' ');
+                    int secondSpace = k.IndexOf(' ', firstSpace + 1);
+                    return secondSpace > 0 ? k.Substring(0, secondSpace) : "World 1";
+                })
+                .Distinct()
+                .OrderBy(w => w, new NaturalStringComparer())
+                .ToList();
+
+            if (worlds.Count == 0)
             {
-                string song;
-                if (ootShuffleEnabled)
-                {
-                    // Shuffle enabled: use value from log or "?"
-                    song = _songEvents.TryGetValue(kv.Key, out var s) ? s : "?";
-                }
-                else
-                {
-                    // Shuffle disabled: use vanilla song
-                    song = kv.Value;
-                }
-                int rowIdx = _dgvSongEvents.Rows.Add(kv.Key, song);
-                if (rowIdx >= 0 && rowIdx < _dgvSongEvents.Rows.Count)
-                {
-                    var row = _dgvSongEvents.Rows[rowIdx];
-                    // Check if "Song" column exists by column index
-                    int songColIndex = _dgvSongEvents.Columns.IndexOf(_dgvSongEvents.Columns["Song"]);
-                    if (songColIndex >= 0 && songColIndex < row.Cells.Count)
-                    {
-                        var cell = row.Cells[songColIndex];
-                        // Allow editing only if shuffle is enabled
-                        cell.ReadOnly = !ootShuffleEnabled;
-                    }
-                }
+                AddSongEventBlock("", worldFilter, ootShuffleEnabled, mmShuffleEnabled);
+                return;
             }
 
-            // Always show MM locations regardless of game configuration
-            foreach (var kv in MmSongEventDefaults)
+            foreach (var world in worlds)
             {
-                string song;
-                if (mmShuffleEnabled)
-                {
-                    // Shuffle enabled: use value from log or "?"
-                    song = _songEvents.TryGetValue(kv.Key, out var s) ? s : "?";
-                }
-                else
-                {
-                    // Shuffle disabled: use vanilla song
-                    song = kv.Value;
-                }
-                int rowIdx = _dgvSongEvents.Rows.Add(kv.Key, song);
-                if (rowIdx >= 0 && rowIdx < _dgvSongEvents.Rows.Count)
-                {
-                    var row = _dgvSongEvents.Rows[rowIdx];
-                    // Check if "Song" column exists by column index
-                    int songColIndex = _dgvSongEvents.Columns.IndexOf(_dgvSongEvents.Columns["Song"]);
-                    if (songColIndex >= 0 && songColIndex < row.Cells.Count)
-                    {
-                        var cell = row.Cells[songColIndex];
-                        // Allow editing only if shuffle is enabled
-                        cell.ReadOnly = !mmShuffleEnabled;
-                    }
-                }
+                if (worldFilter != null && !string.Equals(worldFilter, world, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                AddSongEventBlock(world, worldFilter, ootShuffleEnabled, mmShuffleEnabled);
             }
         }
+
+        private void AddSongEventBlock(string world, string? worldFilter, bool ootShuffleEnabled, bool mmShuffleEnabled)
+        {
+            string prefix = string.IsNullOrEmpty(world) ? "" : $"{world} ";
+
+            int headerIdx = _dgvSongEvents.Rows.Add(world, $"{world} - Ocarina of Time", "");
+            if (headerIdx >= 0 && headerIdx < _dgvSongEvents.Rows.Count)
+            {
+                var headerRow = _dgvSongEvents.Rows[headerIdx];
+                headerRow.ReadOnly = true;
+                headerRow.DefaultCellStyle.BackColor = Color.FromArgb(60, 60, 80);
+                headerRow.DefaultCellStyle.ForeColor = Color.White;
+                headerRow.DefaultCellStyle.Font = new Font(_dgvSongEvents.Font, FontStyle.Bold);
+                headerRow.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 60, 80);
+                headerRow.DefaultCellStyle.SelectionForeColor = Color.White;
+            }
+
+            foreach (var kv in OotSongEventDefaults)
+            {
+                string fullKey = prefix + kv.Key;
+                string song;
+                if (ootShuffleEnabled)
+                    song = _songEvents.TryGetValue(fullKey, out var s) ? s : "?";
+                else
+                    song = kv.Value;
+
+                int rowIdx = _dgvSongEvents.Rows.Add(world, kv.Key, song);
+                SetSongCellReadOnly(rowIdx, ootShuffleEnabled);
+            }
+
+            int mmHeaderIdx = _dgvSongEvents.Rows.Add(world, $"{world} - Majora's Mask", "");
+            if (mmHeaderIdx >= 0 && mmHeaderIdx < _dgvSongEvents.Rows.Count)
+            {
+                var mmHeaderRow = _dgvSongEvents.Rows[mmHeaderIdx];
+                mmHeaderRow.ReadOnly = true;
+                mmHeaderRow.DefaultCellStyle.BackColor = Color.FromArgb(60, 60, 80);
+                mmHeaderRow.DefaultCellStyle.ForeColor = Color.White;
+                mmHeaderRow.DefaultCellStyle.Font = new Font(_dgvSongEvents.Font, FontStyle.Bold);
+                mmHeaderRow.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 60, 80);
+                mmHeaderRow.DefaultCellStyle.SelectionForeColor = Color.White;
+            }
+
+            foreach (var kv in MmSongEventDefaults)
+            {
+                string fullKey = prefix + kv.Key;
+                string song;
+                if (mmShuffleEnabled)
+                    song = _songEvents.TryGetValue(fullKey, out var s) ? s : "?";
+                else
+                    song = kv.Value;
+
+                int rowIdx = _dgvSongEvents.Rows.Add(world, kv.Key, song);
+                SetSongCellReadOnly(rowIdx, mmShuffleEnabled);
+            }
+        }
+
+        private void SetSongCellReadOnly(int rowIdx, bool enabled)
+        {
+            if (rowIdx < 0 || rowIdx >= _dgvSongEvents.Rows.Count) return;
+            var row = _dgvSongEvents.Rows[rowIdx];
+            int songColIndex = _dgvSongEvents.Columns.IndexOf(_dgvSongEvents.Columns["Song"]);
+            if (songColIndex >= 0 && songColIndex < row.Cells.Count)
+                row.Cells[songColIndex].ReadOnly = !enabled;
+        }
+
 
         private void LoadSongEventsFromLog()
         {
             if (_spoilerLog == null) return;
-            
+
             foreach (var kv in _spoilerLog.SongEvents)
             {
-                if (SongEventNameMapping.TryGetValue(kv.Key, out var locationName))
+                string worldPrefix = "";
+                string eventKey = kv.Key.Trim();
+
+                if (eventKey.StartsWith("World ", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Map song name from log to our internal song name
+                    int firstSpace = eventKey.IndexOf(' ');
+                    int secondSpace = eventKey.IndexOf(' ', firstSpace + 1);
+                    if (secondSpace > 0)
+                    {
+                        worldPrefix = eventKey.Substring(0, secondSpace);
+                        eventKey = eventKey.Substring(secondSpace + 1).Trim();
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(eventKey)) continue;
+
+                if (SongEventNameMapping.TryGetValue(eventKey, out var locationName))
+                {
                     string songName = kv.Value;
                     if (SongNameMapping.TryGetValue(songName, out var mappedSongName))
-                    {
                         songName = mappedSongName;
-                    }
-                    _songEvents[locationName] = songName;
+
+                    string fullKey = string.IsNullOrEmpty(worldPrefix)
+                        ? locationName
+                        : $"{worldPrefix} {locationName}";
+                    _songEvents[fullKey] = songName;
                 }
             }
         }
@@ -2677,46 +3401,124 @@ namespace OoTMMTracker.Forms
         {
             if (e.RowIndex < 0 || e.ColumnIndex != 1) return;
             var row = _dgvSongEvents.Rows[e.RowIndex];
-            var loc  = row.Cells[0].Value?.ToString() ?? "";
-            var song = row.Cells[1].Value?.ToString() ?? "?";
+            var world = row.Cells[0].Value?.ToString() ?? "World 1";
+            var loc = row.Cells[1].Value?.ToString() ?? "";
+            var song = row.Cells[2].Value?.ToString() ?? "?";
+
+            if (loc.Contains("Ocarina of Time") || loc.Contains("Majora's Mask") || string.IsNullOrWhiteSpace(loc))
+                return;
+
+            string fullKey = string.IsNullOrEmpty(world) ? loc : $"{world} {loc}";
             if (!string.IsNullOrEmpty(loc))
-                _songEvents[loc] = song;
+                _songEvents[fullKey] = song;
         }
 
-        private void UpdateEntrancesList()        {
+        private void UpdateEntrancesList()
+        {
             _dgvEntrances.Rows.Clear();
-            
-            if (_spoilerLog == null)
-                return;
-            
-            foreach (var entrance in _spoilerLog.Entrances.OrderBy(e => e.Key))
+            if (_spoilerLog == null) return;
+
+            string? worldFilter = (_cmbWorldFilter.Visible && _cmbWorldFilter.SelectedIndex > 0)
+                ? _cmbWorldFilter.SelectedItem?.ToString()
+                : null;
+
+            var entrances = _spoilerLog.Entrances
+                .Select(kvp =>
+                {
+                    if (kvp.Key.StartsWith("World "))
+                    {
+                        var parts = kvp.Key.Split(new[] { ' ' }, 3);
+                        if (parts.Length >= 2)
+                        {
+                            string world = $"{parts[0]} {parts[1]}";
+                            string entranceName = parts.Length == 3 ? parts[2] : kvp.Key;
+                            return (World: world, From: entranceName, To: kvp.Value);
+                        }
+                    }
+                    return (World: "World 1", From: kvp.Key, To: kvp.Value);
+                })
+                .Where(e => worldFilter == null || e.World == worldFilter)
+                .OrderBy(e => e.World)
+                .ThenBy(e => e.From);
+
+            foreach (var entrance in entrances)
             {
-                _dgvEntrances.Rows.Add(entrance.Key, entrance.Value);
+                _dgvEntrances.Rows.Add(
+                    entrance.World,
+                    _cmbWorldFilter.Visible ? entrance.From : $"{entrance.From} ({entrance.World})",
+                    entrance.To
+                );
             }
         }
+        private void UpdateTrackerWorldFilterVisibility()
+        {
+            if (_trackerWorldFilterPanel == null || _cmbTrackerWorldFilter == null) return;
 
+            if (_spoilerLog == null)
+            {
+                _cmbTrackerWorldFilter.Visible = false;
+                return;
+            }
+
+            var worlds = _spoilerLog.Locations.Values
+                .Select(l => l.World)
+                .Where(w => !string.IsNullOrEmpty(w))
+                .Distinct()
+                .ToList();
+
+            if (worlds.Count <= 1)
+            {
+                _cmbTrackerWorldFilter.Visible = false;
+
+                if (worlds.Count == 1 && _cmbTrackerWorldFilter.Items.Count == 0)
+                {
+                    _cmbTrackerWorldFilter.Items.Add(worlds[0]);
+                    _cmbTrackerWorldFilter.SelectedIndex = 0;
+                }
+            }
+            else
+            {
+                _cmbTrackerWorldFilter.Visible = true;
+            }
+        }
+        private void BuildLocationCache()
+        {
+            _locationCache.Clear();
+
+            foreach (var loc in _spoilerLog.Locations.Values)
+            {
+                string locWithoutPrefix = loc.Location;
+                if (locWithoutPrefix.StartsWith("World "))
+                {
+                    var parts = locWithoutPrefix.Split(new[] { ' ' }, 3);
+                    if (parts.Length >= 3)
+                        locWithoutPrefix = parts[2];
+                }
+                _locationCache[locWithoutPrefix] = loc.Location;
+            }
+        }
         // Helper methods for counting found/total locations in regions
-        private int GetRegionFoundCount(IEnumerable<string> locationNames, string game)
+        private int GetRegionFoundCount(IEnumerable<string> locationNames, string game, string world)
         {
             int found = 0;
             foreach (var loc in locationNames)
             {
-                if (_chkColorHighlight?.Checked == true && _coloredLocations.Contains($"{game}|{loc}"))
+                if (_chkColorHighlight?.Checked == true && _coloredLocations.Contains($"{world}|{game}|{loc}"))
                     continue;
-                if (_foundLocations.Contains($"{game}|{loc}"))
+                if (_foundLocations.Contains($"{world}|{game}|{loc}"))
                     found++;
             }
             return found;
         }
 
-        private int GetRegionTotalCount(IEnumerable<string> locationNames, string game)
+        private int GetRegionTotalCount(IEnumerable<string> locationNames, string game, string world)
         {
             int total = 0;
             foreach (var loc in locationNames)
             {
-                if (_chkColorHighlight?.Checked == true && _coloredLocations.Contains($"{game}|{loc}"))
+                if (_chkColorHighlight?.Checked == true && _coloredLocations.Contains($"{world}|{game}|{loc}"))
                     continue;
-                if (_knownLocations.Contains($"{game}|{loc}"))
+                if (_knownLocations.Contains($"{world}|{game}|{loc}"))
                     total++;
             }
             return total;

@@ -14,7 +14,11 @@ namespace OoTMMTracker.Models
         public bool HasOot => Games != "mm";
         public bool HasMm  => Games != "oot";
 
+        public string StartingAge { get; set; } = "child";
+
         // OoT
+        public bool TimeTravelSword { get; set; } = false;
+        public string AgeChange { get; set; } = "none";
         public bool OotExtraChildSwords { get; set; } = false;
         public bool OotSpinUpgrade { get; set; } = false;
         public bool OotBronzeScale { get; set; } = false;
@@ -32,6 +36,7 @@ namespace OoTMMTracker.Models
         public bool MmHoverBoots { get; set; } = false;
         public bool MmDekuShield { get; set; } = false;
 		public bool MmBoomerang { get; set; } = false;
+        public bool MmSlingshot { get; set; } = false;
 
         // General
         public bool ColossalWallet { get; set; } = false;
@@ -59,6 +64,7 @@ namespace OoTMMTracker.Models
         public bool SharedHammer { get; set; } = false;
         public bool SharedBottles { get; set; } = false;
 		public bool SharedBoomerang { get; set; } = false;
+        public bool SharedSlingshot { get; set; } = false;
         // MM Clocks
         public bool ClocksEnabled { get; set; } = false;      // clocks: true
         public string ProgressiveClocks { get; set; } = "separate"; // progressiveClocks: separate/ascending/descending
@@ -223,7 +229,11 @@ namespace OoTMMTracker.Models
         public bool HasSrPouch(string dungeonId, string packId) => SrPouchPacks.Contains($"{dungeonId}_{packId}");
         // Master Quest Dungeons
         public List<string> MqDungeons { get; set; } = new List<string>();
-        public bool IsMq(string id) => MqDungeons.Contains(id);  // silverRupeeShuffle != vanilla/ownDungeon
+        public bool IsMq(string dungeonId)
+        {
+            if (MqDungeons == null || MqDungeons.Count == 0) return false;
+            return MqDungeons.Contains(dungeonId);
+        }
         // Key Rings — replace all dungeon keys with one item
         public bool KeyRingsOot { get; set; } = false;  // Small Key Ring (OoT): all
         public bool KeyRingsMm  { get; set; } = false;  // Small Key Ring (MM): all
@@ -328,8 +338,12 @@ namespace OoTMMTracker.Models
             cfg.SharedMaskStone     = GetBool(log, "sharedMaskStone");
             cfg.SharedScarecrow     = GetBool(log, "sharedScarecrow");
 			cfg.SharedBoomerang     = GetBool(log, "sharedBoomerang");
-			cfg.SharedMaskKamaro    = GetBool(log, "sharedMaskKamaro");
+            cfg.SharedSlingshot     = GetBool(log, "sharedSlingshot");
+            cfg.SharedMaskKamaro    = GetBool(log, "sharedMaskKamaro");
             } // end bothGames
+            cfg.TimeTravelSword = cfg.HasOot && GetBool(log, "timeTravelSword");
+            cfg.StartingAge = log.Settings.TryGetValue("startingAge", out var age) ? age : "child";
+            cfg.AgeChange = log.Settings.TryGetValue("ageChange", out var ac) ? ac : "none";
             cfg.ClocksEnabled       = cfg.HasMm && GetBool(log, "clocks");
             cfg.ProgressiveClocks   = log.Settings.TryGetValue("progressiveClocks", out var pc) ? pc : "separate";
             cfg.OwlShuffle          = cfg.HasMm && log.Settings.TryGetValue("owlShuffle", out var os) && os != "none";
@@ -376,7 +390,8 @@ namespace OoTMMTracker.Models
             cfg.MmShortHookshot     = GetBool(log, "shortHookshotMm");
             cfg.MmHammer            = GetBool(log, "hammerMm");
 			cfg.MmBoomerang         = GetBool(log, "boomerangMm");
-			cfg.OotKamaroMask       = GetBool(log, "kamaroMaskOot");
+            cfg.MmSlingshot         = GetBool(log, "slingshotMm");
+            cfg.OotKamaroMask       = GetBool(log, "kamaroMaskOot");
             cfg.GfsOot              = GetBool(log, "gfsOot");
             cfg.PowderKegOot        = GetBool(log, "powderKegOot");
             cfg.RustyKeysOot        = GetBool(log, "rustyKeysOot");
@@ -454,14 +469,35 @@ namespace OoTMMTracker.Models
             cfg.SoulsMiscMm      = cfg.HasMm  && GetBool(log, "soulsMiscMm");
             cfg.SharedSoulsMisc  = bothGames && cfg.SoulsMiscOot && cfg.SoulsMiscMm && GetBool(log, "sharedSoulsMisc");
             // Master Quest Dungeons (World Flags) — only if OoT in rando
-            if (cfg.HasOot && log.WorldFlags.TryGetValue("Master Quest Dungeons", out var mq))
+            if (cfg.HasOot)
             {
-                if (mq == "all")
-                    foreach (var id in new[]{"deku_tree","dodongo","jabu","forest_temple","fire_temple","water_temple","shadow_temple","spirit_temple","botw","ice_cavern","gtg","ganons_castle"})
+                string? mq = null;
+                foreach (var kvp in log.WorldFlags)
+                {
+                    if (kvp.Key.EndsWith("Master Quest Dungeons", StringComparison.OrdinalIgnoreCase))
+                    {
+                        mq = kvp.Value;
+                        break;
+                    }
+                }
+                if (mq == null)
+                    log.WorldFlags.TryGetValue("Master Quest Dungeons", out mq);
+
+                if (!string.IsNullOrEmpty(mq) && mq != "none" && mq != "all")
+                {
+                    var dungeonNames = mq.Split(new[] { '|', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var name in dungeonNames)
+                    {
+                        var trimmed = name.Trim();
+                        if (!string.IsNullOrEmpty(trimmed))
+                            AddMqDungeonByName(cfg, trimmed);
+                    }
+                }
+                else if (mq == "all")
+                {
+                    foreach (var id in new[] { "deku_tree", "dodongo", "jabu", "forest_temple", "fire_temple", "water_temple", "shadow_temple", "spirit_temple", "botw", "ice_cavern", "gtg", "ganons_castle" })
                         cfg.MqDungeons.Add(id);
-                else if (!string.IsNullOrEmpty(mq) && mq != "none")
-                    foreach (var name in mq.Split('|'))
-                        AddMqDungeonByName(cfg, name.Trim());
+                }
             }
             if (cfg.SilverRupees && log.WorldFlags.TryGetValue("Silver Rupee Pouches", out var srp))
             {
@@ -571,7 +607,6 @@ namespace OoTMMTracker.Models
             };
             if (id != null) cfg.MqDungeons.Add(id);
         }
-
         private static void AddKeyRingByName(TrackerConfig cfg, string name)        {
             var id = name.ToLower() switch
             {

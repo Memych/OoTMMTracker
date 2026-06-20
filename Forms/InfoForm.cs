@@ -30,7 +30,7 @@ namespace OoTMMTracker.Forms
             };
             this.Controls.Add(rtb);
 
-            H(rtb, "OoTMM Tracker v1.2.7");
+            H(rtb, "OoTMM Tracker v1.3.0");
             N(rtb, "2026  --  Made in Russia  --  by ");
             B(rtb, "Memych");
             N(rtb, "\n\n");

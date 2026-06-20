@@ -42,6 +42,7 @@ namespace OoTMMTracker.Forms
         private CheckBox _chkMmShortHookshot  = null!;
         private CheckBox _chkMmHammer         = null!;
 		private CheckBox _chkMmBoomerang      = null!;
+        private CheckBox _chkMmSlingshot      = null!;
         private CheckBox _chkMmSpellFire      = null!;
         private CheckBox _chkMmSpellWind      = null!;
         private CheckBox _chkMmSpellLove      = null!;
@@ -120,6 +121,7 @@ namespace OoTMMTracker.Forms
         private CheckBox _chkSharedOcarina     = null!;
         private CheckBox _chkSharedHammer      = null!;
 		private CheckBox _chkSharedBoomerang   = null!;
+        private CheckBox _chkSharedSlingshot   = null!;
         private CheckBox _chkSharedBottles     = null!;
         private CheckBox _chkSharedNutsSticks  = null!;
         private CheckBox _chkSharedBombchu     = null!;
@@ -300,10 +302,12 @@ namespace OoTMMTracker.Forms
             _chkMmHammer     = AddCheckLeft(panelMm, "Megaton Hammer (hammerMm)", Config.MmHammer, ref y);
 			_chkMmBoomerang = AddCheckRight(panelMm, "Boomerang (boomerangMm)", Config.MmBoomerang, y);
             NextRow(ref y);
-            _chkMmSpellFire  = AddCheckLeft(panelMm, "Din's Fire (spellFireMm)", Config.MmSpellFire, ref y);
-            _chkMmSpellWind  = AddCheckRight(panelMm, "Farore's Wind (spellWindMm)", Config.MmSpellWind, y);
+            _chkMmSlingshot = AddCheckLeft(panelMm, "Slingshot (slingshotMm)", Config.MmSlingshot, ref y);
+            _chkMmSpellFire  = AddCheckRight(panelMm, "Din's Fire (spellFireMm)", Config.MmSpellFire, y);
             NextRow(ref y);
-            _chkMmSpellLove  = AddCheck(panelMm, "Nayru's Love (spellLoveMm)", Config.MmSpellLove, ref y);
+            _chkMmSpellWind = AddCheckLeft(panelMm, "Farore's Wind (spellWindMm)", Config.MmSpellWind, ref y);
+            _chkMmSpellLove  = AddCheckRight(panelMm, "Nayru's Love (spellLoveMm)", Config.MmSpellLove, y);
+            NextRow(ref y);
 
             y += 8;
             AddSection(panelMm, "Bombchu (MM)", ref y);
@@ -385,13 +389,14 @@ namespace OoTMMTracker.Forms
 			_chkSharedBoomerang = AddCheckRight(panelShared, "Boomerang (sharedBoomerang)", Config.SharedBoomerang, y);
 			NextRow(ref y);
 			LinkEnabled(_chkSharedBoomerang, _chkMmBoomerang);
-            
-            // Shared Great Fairy Sword and Powder Keg
-            _chkSharedGfs = AddCheckLeft(panelShared, "Great Fairy Sword (sharedGfs)", Config.SharedGfs, ref y);
-            _chkSharedPowderKeg = AddCheckRight(panelShared, "Powder Keg (sharedPowderKeg)", Config.SharedPowderKeg, y);
+            _chkSharedSlingshot = AddCheckLeft(panelShared, "Slingshot (sharedSlingshot)", Config.SharedSlingshot, ref y);
+            LinkEnabled(_chkSharedSlingshot, _chkMmSlingshot);
+            _chkSharedGfs = AddCheckRight(panelShared, "Great Fairy Sword (sharedGfs)", Config.SharedGfs, y);
             NextRow(ref y);
+            _chkSharedPowderKeg = AddCheckLeft(panelShared, "Powder Keg (sharedPowderKeg)", Config.SharedPowderKeg, ref y);
             LinkEnabled(_chkSharedGfs, _chkGfsOot);
             LinkEnabled(_chkSharedPowderKeg, _chkPowderKegOot);
+            NextRow(ref y);
 
             y += 8;
             AddSection(panelShared, "Combined masks", ref y);
@@ -1555,6 +1560,7 @@ namespace OoTMMTracker.Forms
             Config.MmShortHookshot     = _chkMmShortHookshot.Checked;
             Config.MmHammer            = _chkMmHammer.Checked;
 			Config.MmBoomerang         = _chkMmBoomerang.Checked;
+            Config.MmSlingshot         = _chkMmSlingshot.Checked;
             Config.MmSpellFire         = _chkMmSpellFire.Checked;
             Config.MmSpellWind         = _chkMmSpellWind.Checked;
             Config.MmSpellLove         = _chkMmSpellLove.Checked;
@@ -1620,6 +1626,7 @@ namespace OoTMMTracker.Forms
             Config.SharedOcarina       = _chkSharedOcarina.Checked;
             Config.SharedHammer        = _chkSharedHammer.Checked;
 			Config.SharedBoomerang     = _chkSharedBoomerang.Checked;
+            Config.SharedSlingshot     = _chkSharedSlingshot.Checked;
             Config.SharedBottles       = _chkSharedBottles.Checked;
             Config.SharedNutsSticks    = _chkSharedNutsSticks.Checked;
             Config.SharedBombchu       = _chkSharedBombchu.Checked;

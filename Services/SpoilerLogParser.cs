@@ -54,6 +54,10 @@ namespace OoTMMTracker.Services
             string  region       = "";
             string  specialCond  = "";
             string? worldFlagKey = null;
+            string currentWorld = "World 1";
+            string currentPlayer = "Player 1";
+            string? multilineKey = null;
+            string currentGame = "";
 
             foreach (var line in lines)
             {
@@ -96,41 +100,97 @@ namespace OoTMMTracker.Services
                         break;
 
                     case "StartingItems":
-                        ParseKeyValue(t, log.StartingItems);
+
+                        if (t.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentPlayer = t;
+                            continue;
+                        }
+
+                        if (t.Contains(':'))
+                        {
+                            var parts = t.Split(':', 2);
+                            var key = parts[0].Trim();
+                            var value = parts[1].Trim();
+                            log.StartingItems[$"{currentPlayer}: {key}"] = value;
+                        }
                         break;
 
                     case "WorldFlags":
-                        if (line.StartsWith("    - ") && worldFlagKey != null)
+                        if (Regex.IsMatch(t, @"^World\s+\d+$"))
                         {
-                            // Multiline list item — append with "|"
-                            var item = t.TrimStart('-').Trim();
-                            var existing = log.WorldFlags[worldFlagKey];
-                            log.WorldFlags[worldFlagKey] = string.IsNullOrEmpty(existing) ? item : existing + "|" + item;
+                            currentWorld = t;
+                            multilineKey = null;
+                            break;
                         }
-                        else if (!line.StartsWith("    "))
+
+                        if (!string.IsNullOrEmpty(line) && line.Length > 0 && char.IsWhiteSpace(line[0]) && t.StartsWith("-") && multilineKey != null)
                         {
-                            worldFlagKey = null;
-                            if (t.Contains(':'))
+                            var item = t.TrimStart('-').Trim();
+                            var keyWithWorld = $"{currentWorld} {multilineKey}";
+
+                            if (log.WorldFlags.TryGetValue(keyWithWorld, out var existing) && !string.IsNullOrEmpty(existing))
                             {
-                                var parts = t.Split(':', 2);
-                                var key   = parts[0].Trim();
-                                var value = parts[1].Trim();
-                                log.WorldFlags[key] = value;
-                                worldFlagKey = string.IsNullOrEmpty(value) ? key : null;
+                                log.WorldFlags[keyWithWorld] = existing + ", " + item;
                             }
+                            else
+                            {
+                                log.WorldFlags[keyWithWorld] = item;
+                            }
+                            break;
+                        }
+
+                        if (!string.IsNullOrEmpty(line) && !char.IsWhiteSpace(line[0]) && !t.StartsWith("-"))
+                        {
+                            multilineKey = null;
+                        }
+
+                        if (t.Contains(':'))
+                        {
+                            var parts = t.Split(':', 2);
+                            var key = parts[0].Trim();
+                            var value = parts[1].Trim();
+
+                            if (key == "Gonon Trials") key = "Ganon Trials";
+
+                            var keyWithWorld = $"{currentWorld} {key}";
+                            log.WorldFlags[keyWithWorld] = value;
+
+                            multilineKey = string.IsNullOrEmpty(value) ? key : null;
                         }
                         break;
 
                     case "Entrances":
+                        if (Regex.IsMatch(t, @"^World\s+\d+$"))
+                        {
+                            currentWorld = t;
+                            break;
+                        }
                         if (t.Contains("->"))
                         {
-                            var parts = t.Split("->", 2);
-                            log.Entrances[parts[0].Trim()] = parts[1].Trim();
+                            var parts = t.Split(new[] { "->" }, 2, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length == 2)
+                            {
+                                var from = parts[0].Trim();
+                                var to = parts[1].Trim();
+                                string fullKey = string.IsNullOrEmpty(currentWorld) ? from : $"{currentWorld} {from}";
+                                log.Entrances[fullKey] = to;
+                            }
                         }
                         break;
 
                     case "SongEvents":
-                        // Format: "SONG_EVENT_TEMPLE_OF_TIME" : "Song of Time"
+                        if (Regex.IsMatch(t, @"^World\s+\d+$"))
+                        {
+                            currentWorld = t;
+                            currentGame = "";
+                            break;
+                        }
+                        if (t == "Ocarina of Time" || t == "Majora's Mask")
+                        {
+                            currentGame = t;
+                            break;
+                        }
                         if (t.Contains(':'))
                         {
                             var parts = t.Split(':', 2);
@@ -138,21 +198,30 @@ namespace OoTMMTracker.Services
                             {
                                 var key = parts[0].Trim().Trim('"');
                                 var value = parts[1].Trim().Trim('"');
-                                log.SongEvents[key] = value;
+                                string fullKey = string.IsNullOrEmpty(currentWorld) ? key : $"{currentWorld} {key}";
+                                log.SongEvents[fullKey] = value;
                             }
                         }
                         break;
 
                     case "LocationList":
-                        if (line.StartsWith("  ") && !line.StartsWith("    ") && t.EndsWith("):"))
+                        if (Regex.IsMatch(t, @"^World\s+\d+\s+\(\d+\)$"))
                         {
-                            // Region header: "  Region Name (123):"
+                            var m = Regex.Match(t, @"^World\s+(\d+)");
+                            if (m.Success) currentWorld = $"World {m.Groups[1].Value}";
+                            break;
+                        }
+
+                        if (t.EndsWith("):") && Regex.IsMatch(t, @"\(\d+\):$"))
+                        {
                             var m = Regex.Match(t, @"^(.+?)\s+\(\d+\):$");
                             if (m.Success) region = m.Groups[1].Value.Trim();
+                            break;
                         }
-                        else if (line.StartsWith("    "))
+
+                        if (t.Contains(":"))
                         {
-                            ParseLocation(t, region, log);
+                            ParseLocation(t, region, currentWorld, log);
                         }
                         break;
                 }
@@ -170,29 +239,30 @@ namespace OoTMMTracker.Services
             target[parts[0].Trim()] = parts[1].Trim();
         }
 
-        private static void ParseLocation(string trimmedLine, string currentRegion, SpoilerLog log)
+        private static void ParseLocation(string trimmedLine, string currentRegion, string currentWorld, SpoilerLog log)
         {
             var m = Regex.Match(trimmedLine, @"^(MM|OOT)\s+(.+?):\s+(.+)$");
             if (!m.Success) return;
 
-            var game     = m.Groups[1].Value;
-            var location = m.Groups[2].Value.Trim();
-            var item     = NormalizeItemName(m.Groups[3].Value.Trim());
-            var key      = $"{game} {location}";
+            var game = m.Groups[1].Value;
+            var locationName = m.Groups[2].Value.Trim();
+            var item = NormalizeItemName(m.Groups[3].Value.Trim());
+            var fullKey = $"{currentWorld} {game} {locationName}";
 
-            if (log.Locations.ContainsKey(key)) return;
+            if (log.Locations.ContainsKey(fullKey)) return;
 
-            var region = (location == "Gerudo Member Card" &&
-                          string.IsNullOrEmpty(currentRegion) || currentRegion == "NONE")
-                ? "Thieves' Hideout"
-                : currentRegion;
+            var region = (locationName == "Gerudo Member Card" &&
+                          (string.IsNullOrEmpty(currentRegion) || currentRegion == "NONE"))
+                        ? "Thieves' Hideout"
+                        : (string.IsNullOrEmpty(currentRegion) ? "Other" : currentRegion);
 
-            log.Locations[key] = new LocationItem
+            log.Locations[fullKey] = new LocationItem
             {
-                Location = location,
-                Item     = item,
-                Game     = game,
-                Region   = RegionMapper.GetMappedRegion(region)
+                World = currentWorld,
+                Location = locationName,
+                Item = item,
+                Game = game,
+                Region = RegionMapper.GetMappedRegion(region)
             };
         }
 

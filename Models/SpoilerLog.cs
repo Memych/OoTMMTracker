@@ -11,6 +11,14 @@ namespace OoTMMTracker.Models
         public Dictionary<string, SpecialCondition> SpecialConditions { get; set; } = new();
         public List<string> Tricks { get; set; } = new();
         public Dictionary<string, string> StartingItems { get; set; } = new();
+        public string? GetWorldFlag(string worldName, string flagName)
+        {
+            if (WorldFlags.TryGetValue($"{worldName} {flagName}", out var value))
+                return value;
+            if (WorldFlags.TryGetValue(flagName, out value))
+                return value;
+            return null;
+        }
         public Dictionary<string, string> WorldFlags { get; set; } = new();
         public Dictionary<string, LocationItem> Locations { get; set; } = new();
         public Dictionary<string, string> Entrances { get; set; } = new();
@@ -25,6 +33,7 @@ namespace OoTMMTracker.Models
 
     public class LocationItem
     {
+        public string World { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public string Item { get; set; } = string.Empty;
         public string Game { get; set; } = string.Empty; // OOT or MM

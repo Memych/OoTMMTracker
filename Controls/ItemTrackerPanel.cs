@@ -10,6 +10,7 @@ namespace OoTMMTracker.Controls
 {
     public class ItemTrackerPanel : Panel
     {
+        public string World { get; set; } = "World 1";
         private readonly List<TrackerItem> _items;
         private readonly ToolTip _toolTip;
         private readonly int _columns;
@@ -45,6 +46,7 @@ namespace OoTMMTracker.Controls
 
         // If true — panel is read-only (broadcast mode)
         public bool IsBroadcast { get; set; } = false;
+        public List<TrackerItem> Items => _items;
 
         public ItemTrackerPanel(string title, List<TrackerItem> items, int columns, ToolTip toolTip)
         {
@@ -127,18 +129,33 @@ namespace OoTMMTracker.Controls
 
             return pb;
         }
-
+        public static void RefreshIconPublic(PictureBox pb, TrackerItem item)
+        {
+            RefreshIcon(pb, item);
+        }
         private static void RefreshIcon(PictureBox pb, TrackerItem item)
         {
             Image? img = null;
 
             if (item.IsDungeonReward)
             {
-                // Show icon of selected reward (0 = unknown)
                 var path = item.RewardIndex < item.RewardIcons!.Length
                     ? item.RewardIcons[item.RewardIndex]
                     : item.RewardIcons[0];
                 img = LoadIconPath(path);
+            }
+            else if (item.IsBottle)
+            {
+                if (!string.IsNullOrEmpty(item.BottleContent) && item.BottleContent != "Empty"
+                    && item.BottleContentNames != null && item.BottleContentIcons != null)
+                {
+                    int idx = Array.IndexOf(item.BottleContentNames, item.BottleContent);
+                    if (idx >= 0)
+                    {
+                        img = LoadIconPath(item.BottleContentIcons[idx]);
+                    }
+                }
+                if (img == null) img = LoadIconPath(item.IconPath);
             }
             else if (item.StepIconPaths != null && item.StepIconPaths.Length > 0)
             {
@@ -259,6 +276,19 @@ namespace OoTMMTracker.Controls
                 isDim = !item.DungeonCleared;
             else if (item.IsAutoKey)
                 isDim = !item.AutoKeyLit;
+            else if (item.IsBottle)
+            {
+                bool hasContent = !string.IsNullOrEmpty(item.BottleContent)
+                                  && item.BottleContent != "Empty";
+                if (hasContent)
+                {
+                    isDim = item.CurrentCount == 0;
+                }
+                else
+                {
+                    isDim = item.CurrentCount == 0;
+                }
+            }
             else if (item.CollectedWhenFull)
                 isDim = item.CurrentCount < item.MaxCount;
             else if (item.PartialCollectedAt > 0)
@@ -344,11 +374,11 @@ namespace OoTMMTracker.Controls
             // Border
             bool isLit = item.AlwaysCollected ||
                 (item.IsDungeonReward ? item.DungeonCleared :
-                 item.IsAutoKey ? item.AutoKeyLit :
-                 item.IsBottle ? item.CurrentCount > 0 :
-                 item.CollectedWhenFull ? item.CurrentCount >= item.MaxCount :
-                 item.PartialCollectedAt > 0 ? item.CurrentCount >= item.PartialCollectedAt :
-                 item.CurrentCount > 0);
+                item.IsAutoKey ? item.AutoKeyLit :
+                item.IsBottle ? item.CurrentCount > 0 :
+                item.CollectedWhenFull ? item.CurrentCount >= item.MaxCount :
+                item.PartialCollectedAt > 0 ? item.CurrentCount >= item.PartialCollectedAt :
+                item.CurrentCount > 0);
             Color borderColor = item.AlwaysCollected
                 ? Color.FromArgb(200, 180, 50)
                 : isLit ? Color.FromArgb(80, 200, 80) : Color.FromArgb(70, 70, 70);
@@ -406,20 +436,21 @@ namespace OoTMMTracker.Controls
             {
                 if (e.Button == MouseButtons.Left)
                 {
-                    // Letter/Gold Dust: cycle 0 → 1 → 2 → 0
-                    if (item.BottleContent is "Ruto's Letter" or "Gold Dust")
+                    if (string.IsNullOrEmpty(item.BottleContent) || item.BottleContent == "Empty")
+                    {
+                        item.CurrentCount = item.CurrentCount > 0 ? 0 : 1;
+                    }
+                    else if (item.BottleContent is "Ruto's Letter" or "Gold Dust")
                     {
                         item.CurrentCount = (item.CurrentCount + 1) % 3;
                     }
                     else
                     {
-                        // Regular bottle: toggle collected
                         item.CurrentCount = item.CurrentCount > 0 ? 0 : 1;
                     }
                 }
                 else if (e.Button == MouseButtons.Right)
                 {
-                    // Right click: cycle through content options
                     if (item.BottleContentNames != null)
                     {
                         int idx = Array.IndexOf(item.BottleContentNames, item.BottleContent);
@@ -768,51 +799,57 @@ namespace OoTMMTracker.Controls
         {
             foreach (var item in _items)
             {
+                string key = $"{World}|{item.Id}";
                 if (item.IsDungeonReward)
-                    progress[item.Id] = (item.DungeonCleared ? 100 : 0) + item.RewardIndex;
+                    progress[key] = (item.DungeonCleared ? 100 : 0) + item.RewardIndex;
                 else if (item.IsBottle)
                 {
-                    // Encode: contentIndex * 10 + currentCount
                     int contentIdx = item.BottleContentNames != null
                         ? Array.IndexOf(item.BottleContentNames, item.BottleContent)
                         : 0;
-                    if (contentIdx < 0) contentIdx = item.BottleContentNames!.Length - 1; // empty
-                    progress[item.Id] = contentIdx * 10 + item.CurrentCount;
+                    if (contentIdx < 0) contentIdx = item.BottleContentNames!.Length - 1;
+                    progress[key] = contentIdx * 10 + item.CurrentCount;
                 }
                 else
-                    progress[item.Id] = item.CurrentCount;
+                    progress[key] = item.CurrentCount;
             }
         }
-        
+
         public void LoadProgress(Dictionary<string, int> progress)
         {
             foreach (var item in _items)
             {
-                if (progress.TryGetValue(item.Id, out var val))
+                string key = $"{World}|{item.Id}";
+                if (!progress.TryGetValue(key, out var val))
+                    continue;
+                if (item.IsDungeonReward)
                 {
-                    if (item.IsDungeonReward)
+                    item.DungeonCleared = val >= 100;
+                    item.RewardIndex = val % 100;
+                }
+                else if (item.IsBottle)
+                {
+                    int contentIdx = val / 10;
+                    int count = val % 10;
+                    if (item.BottleContentNames != null && contentIdx < item.BottleContentNames.Length)
                     {
-                        item.DungeonCleared = val >= 100;
-                        item.RewardIndex = val % 100;
-                    }
-                    else if (item.IsBottle)
-                    {
-                        int contentIdx = val / 10;
-                        int count = val % 10;
-                        if (item.BottleContentNames != null && contentIdx < item.BottleContentNames.Length)
-                        {
-                            item.BottleContent = item.BottleContentNames[contentIdx];
-                            if (item.BottleContentIcons != null)
-                                item.IconPath = item.BottleContentIcons[contentIdx];
-                            item.MaxCount = (item.BottleContent is "Ruto's Letter" or "Gold Dust") ? 2 : 1;
-                        }
-                        item.CurrentCount = Math.Min(count, item.MaxCount);
+                        item.BottleContent = item.BottleContentNames[contentIdx];
+                        if (item.BottleContentIcons != null)
+                            item.IconPath = item.BottleContentIcons[contentIdx];
+                        item.MaxCount = (item.BottleContent is "Ruto's Letter" or "Gold Dust") ? 2 : 1;
                     }
                     else
+                    {
+                        item.BottleContent = "Empty";
+                    }
+                    item.CurrentCount = Math.Min(count, item.MaxCount);
+                }
+                else
+                {
+                    if (val > item.CurrentCount)
                         item.CurrentCount = Math.Min(val, item.MaxCount);
                 }
             }
-            // Batch all redraws at once
             this.SuspendLayout();
             foreach (Control c in this.Controls)
                 if (c is PictureBox pb && pb.Tag is TrackerItem item2)
@@ -821,6 +858,17 @@ namespace OoTMMTracker.Controls
             this.Invalidate(true);
             if (!IsBroadcast)
                 SyncGanonBk();
+        }
+        public TrackerItem? GetItemById(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            string cleanId = id.Trim();
+            foreach (var item in _items)
+            {
+                if (item.Id.Trim() == cleanId)
+                    return item;
+            }
+            return null;
         }
     }
 }

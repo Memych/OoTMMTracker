@@ -20,6 +20,37 @@ namespace OoTMMTracker.Controls
         private MapSubRegion? _subRegion;
         private HashSet<string> _foundLocations = new();
         private HashSet<string> _knownLocations = new();
+        private HashSet<string> _accessibleLocations = new HashSet<string>();
+        private HashSet<string> _accessibleEntrances = new HashSet<string>();
+        private Dictionary<string, HashSet<string>> _accessibleLocationsByWorld = new();
+        private Dictionary<string, HashSet<string>> _accessibleEntrancesByWorld = new();
+
+        public void SetAccessibleEntrances(HashSet<string> accessibleEntrances, string? world = null)
+        {
+            if (world != null)
+            {
+                _accessibleEntrancesByWorld[world] = accessibleEntrances ?? new HashSet<string>();
+            }
+            else
+            {
+                _accessibleEntrances = accessibleEntrances ?? new HashSet<string>();
+            }
+            this.Invalidate();
+        }
+
+        public void SetAccessibleLocations(HashSet<string> accessibleLocations, string? world = null)
+        {
+            if (world != null)
+            {
+                _accessibleLocationsByWorld[world] = accessibleLocations ?? new HashSet<string>();
+            }
+            else
+            {
+                _accessibleLocations = accessibleLocations ?? new HashSet<string>();
+            }
+            this.Invalidate();
+        }
+
         private string _ageFilter = "child";
         private string _game = "OOT";
         private bool _colorsMode = false;
@@ -210,11 +241,12 @@ namespace OoTMMTracker.Controls
 
         // ── Public API ────────────────────────────────────────────────────────
 
-        public void SetSubRegion(MapSubRegion? subRegion, HashSet<string> foundLocations, string game = "OOT")
+        public void SetSubRegion(MapSubRegion? subRegion, HashSet<string> foundLocations, string game = "OOT", string world = "World 1")
         {
             _subRegion      = subRegion;
             _foundLocations = foundLocations;
             _game           = game;
+            _currentWorld   = world;
             _bgImage        = subRegion != null ? LoadImage(subRegion.BackgroundImage) : null;
             // Clear selection on sub-map change
             _selectedMark = null;
@@ -345,23 +377,51 @@ namespace OoTMMTracker.Controls
                 if (!IsMarkVisible(mark)) continue;
 
                 var destRect = MarkDestRect(mark, in mapRect, scale);
-                g.DrawImage(img, destRect);
-
-                if (_selectedMark == mark)
+                bool isAccessible = true;
+                if (mark.IsEntranceShuffleMark && !string.IsNullOrEmpty(mark.EntranceFromId))
                 {
-                    // Redraw icon with yellow tint — only affects non-transparent pixels
-                    var cm = new System.Drawing.Imaging.ColorMatrix(new float[][]{
-                        new float[] { 1.0f,  0.0f,  0.0f, 0, 0 },
-                        new float[] { 0.0f,  1.0f,  0.0f, 0, 0 },
-                        new float[] { 0.0f,  0.0f,  0.0f, 0, 0 },
-                        new float[] { 0,     0,     0,    1, 0 },
-                        new float[] { 0.4f,  0.4f,  0.0f, 0, 1 },
-                    });
-                    using var ia = new System.Drawing.Imaging.ImageAttributes();
-                    ia.SetColorMatrix(cm, System.Drawing.Imaging.ColorMatrixFlag.Default,
-                                         System.Drawing.Imaging.ColorAdjustType.Bitmap);
-                    g.DrawImage(img, destRect, 0, 0, img.Width, img.Height,
-                                GraphicsUnit.Pixel, ia);
+                    isAccessible = IsEntranceAccessible(mark);
+                }
+                else if (mark.LocationNames.Count > 0)
+                {
+                    isAccessible = IsMarkAccessible(mark);
+                }
+
+                if (!isAccessible)
+                {
+                    using (var attributes = new System.Drawing.Imaging.ImageAttributes())
+                    {
+                        var colorMatrix = new System.Drawing.Imaging.ColorMatrix(new float[][]
+                        {
+                            new float[] { 0.3f, 0.3f, 0.3f, 0, 0 },
+                            new float[] { 0.3f, 0.3f, 0.3f, 0, 0 },
+                            new float[] { 0.3f, 0.3f, 0.3f, 0, 0 },
+                            new float[] { 0, 0, 0, 0.5f, 0 },
+                            new float[] { 0, 0, 0, 0, 1 }
+                        });
+                        attributes.SetColorMatrix(colorMatrix);
+                        g.DrawImage(img, destRect, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, attributes);
+                    }
+                }
+                else
+                {
+                    g.DrawImage(img, destRect);
+
+                    if (_selectedMark == mark)
+                    {
+                        var cm = new System.Drawing.Imaging.ColorMatrix(new float[][]{
+                            new float[] { 1.0f,  0.0f,  0.0f, 0, 0 },
+                            new float[] { 0.0f,  1.0f,  0.0f, 0, 0 },
+                            new float[] { 0.0f,  0.0f,  0.0f, 0, 0  },
+                            new float[] { 0,     0,     0,    1, 0 },
+                            new float[] { 0.4f,  0.4f,  0.0f, 0, 1 },
+                        });
+                        using var ia = new System.Drawing.Imaging.ImageAttributes();
+                        ia.SetColorMatrix(cm, System.Drawing.Imaging.ColorMatrixFlag.Default,
+                                             System.Drawing.Imaging.ColorAdjustType.Bitmap);
+                        g.DrawImage(img, destRect, 0, 0, img.Width, img.Height,
+                                    GraphicsUnit.Pixel, ia);
+                    }
                 }
             }
         }
@@ -378,7 +438,16 @@ namespace OoTMMTracker.Controls
 
             foreach (var (mark, img) in _markImages)
             {
+                if (mark.IsEntranceShuffleMark && !string.IsNullOrEmpty(mark.EntranceFromId))
+                {
+                    if (!IsEntranceAccessible(mark)) continue;
+                }
+                else if (mark.LocationNames.Count > 0)
+                {
+                    if (!IsMarkAccessible(mark)) continue;
+                }
                 if (!IsMarkVisible(mark)) continue;
+                if (!IsMarkAccessible(mark)) continue;
                 if (MarkDestRect(mark, in mapRect, scale).Contains(e.Location))
                     candidates.Add((mark, img));
             }
@@ -503,46 +572,53 @@ namespace OoTMMTracker.Controls
             string tip = "";
             foreach (var (mark, _) in _markImages)
             {
+                if (mark.IsEntranceShuffleMark && !string.IsNullOrEmpty(mark.EntranceFromId))
+                {
+                    if (!IsEntranceAccessible(mark)) continue;
+                }
+                else if (mark.LocationNames.Count > 0)
+                {
+                    if (!IsMarkAccessible(mark)) continue;
+                }
                 if (!IsMarkVisible(mark)) continue;
                 if (MarkDestRect(mark, in mapRect, scale).Contains(e.Location))
                 {
                     tip = mark.Tooltip;
                     if (mark.IsEntranceShuffleMark)
                     {
-                        // 1. Try shuffled connection from spoiler log
                         if (_spoilerLog != null &&
-                            EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, mark.EntranceFromId, out var destLine) &&
-                            EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out var shuffledRegion, out var shuffledSub, out _))
+                            EntranceMapNavigation.TryGetDestinationForFromId(_spoilerLog.Entrances, mark.EntranceFromId, out var destLine))
                         {
-                            tip = $"Shuffled: {shuffledRegion}" + (shuffledSub != null && shuffledSub != shuffledRegion ? $" ({shuffledSub})" : "");
+                            if (EntranceMapNavigation.TryGetMapForDestinationLine(destLine, out var shuffledRegion, out var shuffledSub, out _))
+                            {
+                                tip = $"Shuffled: {shuffledRegion}" + (shuffledSub != null && shuffledSub != shuffledRegion ? $" ({shuffledSub})" : "");
+                            }
+                            else
+                            {
+                                tip = $"Shuffled: {destLine}";
+                            }
                         }
-                        // 2. Try default transition
                         else if (DefaultTransitionService.HasDefaultTransition(mark.EntranceFromId))
                         {
-                            // Direct lookup in DestinationEntranceIds
                             if (DefaultTransitionService.TryGetMapForDefaultTransition(mark.EntranceFromId, out var defaultRegion, out var defaultSub, out _))
                             {
                                 tip = $"Vanilla: {defaultRegion}" + (defaultSub != null && defaultSub != defaultRegion ? $" ({defaultSub})" : "");
                             }
                             else
                             {
-                                tip = "Vanilla connection";
+                                tip = "Vanilla (Special Transition)";
                             }
                         }
-                        // 3. Special case: wallmasters
-                        else if (DefaultTransitionService.IsWallmaster(mark.EntranceFromId))
-                        {
-                            tip = "Wallmaster - teleports within same area";
-                        }
-                        // 4. Try vanilla connection via DestinationEntranceIds
-                        else if (EntranceMapNavigation.TryGetMapForDestinationId(mark.EntranceFromId, out var vanillaRegion, out var vanillaSub, out _))
-                        {
-                            tip = $"Vanilla: {vanillaRegion}" + (vanillaSub != null && vanillaSub != vanillaRegion ? $" ({vanillaSub})" : "");
-                        }
-                        // 5. No connection found
                         else
                         {
-                            tip = $"{mark.Tooltip}\n(No destination configured)";
+                            if (EntranceMapNavigation.TryGetMapForDestinationId(mark.EntranceFromId, out var vanillaRegion, out var vanillaSub, out _))
+                            {
+                                tip = $"Vanilla: {vanillaRegion}" + (vanillaSub != null && vanillaSub != vanillaRegion ? $" ({vanillaSub})" : "");
+                            }
+                            else
+                            {
+                                tip = "Vanilla Transition";
+                            }
                         }
                     }
                     break;
@@ -637,62 +713,120 @@ namespace OoTMMTracker.Controls
 
         private bool IsMarkVisible(MapMark mark)
         {
-            bool ageMatch = mark.AgeFilter == "both" || mark.AgeFilter == _ageFilter;
+            bool ageMatch = string.Equals(mark.AgeFilter, "both", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(mark.AgeFilter, _ageFilter, StringComparison.OrdinalIgnoreCase);
             if (!ageMatch) return false;
-
-            if (mark.IsEntranceShuffleMark)
-            {
-                // Always show entrance markers:
-                // - If in spoiler log (shuffled), show as shuffled connection
-                // - If not in spoiler log but has default transition, show as vanilla
-                // - If not in spoiler log and no default transition, still show (will be handled elsewhere)
-                // We don't hide entrance markers based on spoiler log presence
-            }
-
-            if (!IsMarkKnown(mark) || IsMarkComplete(mark)) return false;
-            // Check required setting condition
             if (mark.RequiredSettingKey != null)
             {
                 string? val = null;
                 if (_spoilerLog != null)
                 {
-                    if (!_spoilerLog.Settings.TryGetValue(mark.RequiredSettingKey, out val))
-                        _spoilerLog.WorldFlags.TryGetValue(mark.RequiredSettingKey, out val);
+                    string worldPrefix = $"{_currentWorld} ";
+                    if (_spoilerLog.WorldFlags.TryGetValue(worldPrefix + mark.RequiredSettingKey, out val)) { }
+                    else if (_spoilerLog.Settings.TryGetValue(mark.RequiredSettingKey, out val)) { }
+                    else if (_spoilerLog.WorldFlags.TryGetValue(mark.RequiredSettingKey, out val)) { }
                 }
-                bool matches;
-                if (val == null)
-                    matches = false;
-                else
+
+                bool matches = false;
+                if (val != null)
                 {
                     matches = string.Equals(val, mark.RequiredSettingValue, StringComparison.OrdinalIgnoreCase);
                     if (!matches && mark.RequiredSettingContains != null)
-                        matches = val.Split('|').Any(p => string.Equals(p.Trim(), mark.RequiredSettingContains, StringComparison.OrdinalIgnoreCase));
+                    {
+                        var parts = val.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
+                        matches = parts.Any(p => string.Equals(p.Trim(), mark.RequiredSettingContains, StringComparison.OrdinalIgnoreCase));
+                    }
                 }
+
                 if (mark.RequiredSettingInvert) matches = !matches;
                 if (!matches) return false;
             }
-            // If colors mode: hide mark if ALL its locations are consumable/trap
+            if (mark.IsEntranceShuffleMark)
+            {
+                return true;
+            }
+            else
+            {
+                if (mark.LocationNames.Count > 0)
+                {
+                    if (!IsMarkKnown(mark)) return false;
+                    if (IsMarkComplete(mark)) return false;
+                }
+            }
             if (_colorsMode && mark.LocationNames.Count > 0 &&
                 mark.LocationNames.All(loc =>
-                    _coloredLocations.Contains($"{_game}|{loc}")))
+                    _coloredLocations.Any(cl =>
+                        cl.Equals($"{_currentWorld}|{_game}|{loc}", StringComparison.OrdinalIgnoreCase))))
                 return false;
+
             return true;
         }
 
         private bool IsMarkKnown(MapMark mark)
         {
             if (mark.LocationNames.Count == 0) return true;
+
             return mark.LocationNames.Any(loc =>
-                _knownLocations.Contains($"{_game}|{loc}"));
+            {
+                if (string.IsNullOrEmpty(loc)) return false;
+                string fullKey = $"{_currentWorld}|{_game}|{loc.Trim()}";
+                return _knownLocations.Contains(fullKey);
+            });
         }
 
         private bool IsMarkComplete(MapMark mark)
         {
             if (mark.LocationNames.Count == 0) return false;
+
             return mark.LocationNames.All(loc =>
-                _foundLocations.Contains($"{_game}|{loc}"));
+            {
+                if (string.IsNullOrEmpty(loc)) return false;
+                string fullKey = $"{_currentWorld}|{_game}|{loc.Trim()}";
+                return _foundLocations.Contains(fullKey);
+            });
         }
 
+        private bool IsMarkAccessible(MapMark mark)
+        {
+            string currentWorld = GetCurrentWorld();
+            if (_accessibleLocationsByWorld.TryGetValue(currentWorld, out var worldAccessible))
+            {
+                foreach (var loc in mark.LocationNames)
+                {
+                    if (worldAccessible.Contains($"{currentWorld}|{_game}|{loc.Trim()}"))
+                        return true;
+                }
+            }
+            return mark.LocationNames.Count == 0;
+        }
+        private bool IsEntranceAccessible(MapMark mark)
+        {
+            if (!mark.IsEntranceShuffleMark || string.IsNullOrEmpty(mark.EntranceFromId))
+                return true;
+
+            string currentWorld = GetCurrentWorld();
+            if (_accessibleEntrancesByWorld.TryGetValue(currentWorld, out var worldEntrances))
+            {
+                if (worldEntrances.Contains(mark.EntranceFromId))
+                    return true;
+            }
+            if (_accessibleEntrances != null && _accessibleEntrances.Contains(mark.EntranceFromId))
+                return true;
+
+            return false;
+        }
+        private string _currentWorld = "World 1";
+
+        public void SetCurrentWorld(string world)
+        {
+            _currentWorld = world;
+            this.Invalidate();
+        }
+
+        private string GetCurrentWorld()
+        {
+            return _currentWorld;
+        }
         // ── Image loading ─────────────────────────────────────────────────────
 
         private static Image? LoadImage(string? path)

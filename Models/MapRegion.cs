@@ -112,5 +112,7 @@ namespace OoTMMTracker.Models
         public string? EntranceFromId { get; set; }
 
         public bool IsEntranceShuffleMark => !string.IsNullOrEmpty(EntranceFromId);
+
+        public bool IsAccessible { get; set; } = true;
     }
 }

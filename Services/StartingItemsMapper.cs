@@ -677,6 +677,7 @@ namespace OoTMMTracker.Services
         private static string? GetBottleContent(string name)
         {
             var lower = name.ToLower();
+            lower = System.Text.RegularExpressions.Regex.Replace(lower, @"^player\s+\d+\s+", "").Trim();
             // Strip game suffix
             var stripped = System.Text.RegularExpressions.Regex.Replace(lower, @"\s*\((oot|mm)\)\s*$", "").Trim();
 
