@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.3.0
+
+### New Features
+- Added full support for multiworld seeds
+- Player/World filter added to the tracker — switch between worlds to see each player's progress
+- Item tracker rebuilds automatically when a different world is selected
+- Locations list, world flags, entrances, and song events are filtered by the selected world
+- Starting items are correctly applied per-player (e.g. "Player 1: Hookshot", "Player 2: Bow")
+- Bottles are distributed by owner — OoT and MM bottles are only assigned to the appropriate player
+- Map logic evaluator (location/entrance accessibility) is scoped to the current world
+- Map region/sub-region counters and completion indicators respect the active world
+- Save files store per-world progress; progress keys are namespaced as `World N|<item>`
+- Added MM Slingshot to the item tracker (with configurable shared/separate display)
+
+### Improvements
+— Reduced redundant work on log load and tracker rebuild
+- Tracker is now rebuilt with `resetProgress: true` on log load, fully clearing stale state from the previous log (found locations, item counts, per-panel progress)
+- Unloading a log (F6) also rebuilds the tracker to drop state derived from the previous log
+- `MapAccessibleLocations` runs against a single world snapshot to avoid recomputing the full known-location set on every change
+- Location cache and per-world index are built once on log load instead of on every filter change
+- Map region/sub-region draw handlers reuse precomputed totals and found counts
+
+### Bug Fixes
+- Fixed item tracker not resetting when loading a new spoiler log — panels kept marks/state from the previous log
+- Fixed item tracker not resetting when unloading a log via "Reset Log" (F6)
+- Fixed per-world progress bleed-over when switching between worlds in multiworld seeds
+- Fixed bottle assignment assuming single-world even when item names were namespaced with `Player N`
+- Fixed map accessible-locations list being computed across all worlds instead of the active one
+  
 ## v1.2.7
 
 ### New Features
