@@ -973,6 +973,13 @@ namespace OoTMMTracker.Forms
                 new("MM Owl: Ikana Canyon", "MM_WARP_OWL_IKANA_CANYON"),
                 new("MM Owl: Stone Tower", "MM_WARP_OWL_STONE_TOWER"),
             };
+            quickJumpsAll.Add(new MapJumpTarget("MM Telescope Entrance: Astral Observatory → Termina Field", "MM_TERMINA_FIELD_TELESCOPE"));
+            quickJumpsAll.Add(new MapJumpTarget("MM Telescope Exit: Termina Field → Astral Observatory", "MM_ASTRAL_OBSERVATORY_FROM_TELESCOPE"));
+            quickJumpsAll.Add(new MapJumpTarget("MM Telescope Entrance: Kafei's Hideout → Curiosity Shop", "MM_CURIOSITY_SHOP_TELESCOPE"));
+            quickJumpsAll.Add(new MapJumpTarget("MM Telescope Exit: Curiosity Shop → Kafei's Hideout", "MM_KAFEI_HIDEOUT_FROM_TELESCOPE"));
+            quickJumpsAll.Add(new MapJumpTarget("MM Telescope Entrance: Pirate Fortress Sewers → Exterior", "MM_PIRATE_FORTRESS_TELESCOPE"));
+            quickJumpsAll.Add(new MapJumpTarget("MM Telescope Exit: Pirate Fortress Exterior → Sewers", "MM_PIRATE_FORTRESS_SEWERS_FROM_TELESCOPE"));
+            
             foreach (var wmId in SpoilerEntranceIdDatabase.GetKnownIds()
                 .Where(id => id.Contains("WALLMASTER", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(id => id))
