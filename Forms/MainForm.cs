@@ -1357,7 +1357,7 @@ namespace OoTMMTracker.Forms
             _chkOoTAdult = new CheckBox
             {
                 Text      = "Adult",
-                Location  = new Point(668, 7),
+                Location  = new Point(500, 7),
                 Size      = new Size(85, 18),
                 ForeColor = Color.White,
                 Checked   = _ootAdultState,
@@ -1375,7 +1375,7 @@ namespace OoTMMTracker.Forms
             _chkMMCleared = new CheckBox
             {
                 Text      = "Cleared",
-                Location  = new Point(668, 7),  // Same position as OoT checkbox
+                Location  = new Point(500, 7),  // Same position as OoT checkbox
                 Size      = new Size(85, 18),
                 ForeColor = Color.White,
                 Checked   = _mmClearedState,
@@ -1421,8 +1421,8 @@ namespace OoTMMTracker.Forms
                     _mapTrackerPanel.SetAgeFilter("both");
                 }
             };
-            mapFilterRow1.Controls.Add(_chkOoTAdult);
-            mapFilterRow1.Controls.Add(_chkMMCleared);
+            mapFilterRow2.Controls.Add(_chkOoTAdult);
+            mapFilterRow2.Controls.Add(_chkMMCleared);
             tabMap.Controls.Add(_mapTrackerPanel);
             tabMap.Controls.Add(mapFilterPanel);
             _tabControl.TabPages.Add(tabMap);
