@@ -3545,7 +3545,9 @@ namespace OoTMMTracker.Services
                     DestinationEntranceIds = new List<string>
 					{
 						"MM_KAFEI_HIDEOUT",
-						"MM_CURIOSITY_SHOP"
+						"MM_CURIOSITY_SHOP",
+						"MM_CURIOSITY_SHOP_TELESCOPE",
+						"MM_KAFEI_HIDEOUT_FROM_TELESCOPE"
 					},
                     Marks = new List<MapMark>
                     {
@@ -3683,7 +3685,11 @@ namespace OoTMMTracker.Services
                 {
                     Name = "Astral Observatory",
                     BackgroundImage = MM("Clock_Town", "Observatory"),
-                    DestinationEntranceIds = new List<string> { "MM_ASTRAL_OBSERVATORY_FROM_FIELD" },
+                    DestinationEntranceIds = new List<string>
+					{
+						"MM_ASTRAL_OBSERVATORY_FROM_FIELD",
+						"MM_ASTRAL_OBSERVATORY_FROM_TELESCOPE"
+					},
                     Marks = new List<MapMark>
                     {
                         M("Pot.png", 502, 455, 24, "MM Astral Observatory Pot 1", "Astral Observatory Pot 1"),
@@ -5810,7 +5816,8 @@ namespace OoTMMTracker.Services
 						"MM_TERMINA_FIELD_FROM_ROAD_TO_IKANA",
 						"MM_TERMINA_FIELD_FROM_PATH_TO_MOUNTAIN_VILLAGE",
 						"MM_TERMINA_FIELD_FROM_ROAD_TO_SWAMP",
-						"MM_TERMINA_FIELD_FROM_MILK_ROAD"
+						"MM_TERMINA_FIELD_FROM_MILK_ROAD",
+						"MM_TERMINA_FIELD_TELESCOPE"
 					},
                     Marks = new List<MapMark>
                     {
@@ -11390,7 +11397,8 @@ namespace OoTMMTracker.Services
                     DestinationEntranceIds = new List<string>
 					{
 						"MM_SEWERS_FROM_EXTERIOR_DOOR",
-						"MM_SEWERS_FROM_EXTERIOR_GATE"
+						"MM_SEWERS_FROM_EXTERIOR_GATE",
+						"MM_PIRATE_FORTRESS_SEWERS_FROM_TELESCOPE"
 					},
                     Marks = new List<MapMark>
                     {
@@ -11465,7 +11473,8 @@ namespace OoTMMTracker.Services
                     DestinationEntranceIds = new List<string>
 					{
 						"MM_PIRATE_FORTRESS_INTERIOR",
-						"MM_PIRATE_FORTRESS_INTERIOR_FROM_LOOKOUT"
+						"MM_PIRATE_FORTRESS_INTERIOR_FROM_LOOKOUT",
+						"MM_PIRATE_FORTRESS_TELESCOPE"
 					},
                     Marks = new List<MapMark>
                     {
@@ -11757,7 +11766,7 @@ namespace OoTMMTracker.Services
 						M("Pot.png", 530, 112, 24, "MM Ancient Castle of Ikana Boss Pot 7", "Ancient Castle of Ikana Boss Pot 7"),
 						M("Pot.png", 410, 112, 24, "MM Ancient Castle of Ikana Boss Pot 8", "Ancient Castle of Ikana Boss Pot 8"),
 						
-						ME("Entrance.png", 457, 582, "Entrance shuffle (Ikana Castle Exterior)", "MM_IKANA_VALLEY_FROM_SHRINE")
+						ME("Entrance.png", 457, 582, "Entrance shuffle (Ikana Castle Exterior)", "MM_IKANA_CASTLE_EXTERIOR_FROM_CASTLE")
                     }
                 }
 			};
