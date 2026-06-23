@@ -174,7 +174,7 @@ namespace OoTMMTracker.Services
                     Marks = new List<MapMark>
                     {
                         ME("Entrance.png", 640, 8, "Entrance shuffle (Death Mountain Trail)", "OOT_TRAIL_SUMMIT_FROM_CRATER"),
-                        ME("Entrance.png", 773, 433, "Entrance shuffle (Goron City)", "OOT_GORON_CITY_FROM_CRATER"),
+                        ME("Entrance.png", 757, 343, "Entrance shuffle (Goron City)", "OOT_GORON_CITY_FROM_CRATER"),
                         ME("Entrance.png", 451, 563, "Entrance shuffle (Fire Temple)", "OOT_TEMPLE_FIRE"),
                         ME("Entrance.png", 696, 182, "Entrance shuffle (Great Fairy Fountain)", "OOT_FAIRY_MAGIC2"),
                         ME("Entrance.png", 720, 489, "Entrance shuffle (Deku Scrubs Grotto)", "OOT_GROTTO_SCRUBS3_DMC"),
@@ -7307,14 +7307,14 @@ namespace OoTMMTracker.Services
 						M("Pot.png", 367, 458, 24, "OOT MQ Dodongo Cavern Pot Stairs 2", "MQ Dodongo Cavern Pot Stairs 2"),
 						M("Pot.png", 345, 254, 24, "OOT MQ Dodongo Cavern Pot Stairs 3", "MQ Dodongo Cavern Pot Stairs 3"),
 						M("Pot.png", 511, 321, 24, "OOT MQ Dodongo Cavern Pot Stairs 4", "MQ Dodongo Cavern Pot Stairs 4"),
-						M("Crate.png", 189, 237, 24, "OOT MQ Dodongo Cavern Staircase Room Lower Large Crate 1", "MQ Dodongo Cavern Staircase Room Lower Large Crate 1"),
-						M("Crate.png", 298, 190, 24, "OOT MQ Dodongo Cavern Staircase Room Lower Large Crate 2", "MQ Dodongo Cavern Staircase Room Lower Large Crate 2"),
+						M("Crate.png", 189, 345, 24, "OOT MQ Dodongo Cavern Staircase Room Lower Large Crate 1", "MQ Dodongo Cavern Staircase Room Lower Large Crate 1"),
+						M("Crate.png", 339, 284, 24, "OOT MQ Dodongo Cavern Staircase Room Lower Large Crate 2", "MQ Dodongo Cavern Staircase Room Lower Large Crate 2"),
 						M("Crate.png", 88, 246, 24, "OOT MQ Dodongo Cavern Staircase Room Upper Large Crate 1", "MQ Dodongo Cavern Staircase Room Upper Large Crate 1"),
 						M("Crate.png", 312, 266, 24, "OOT MQ Dodongo Cavern Staircase Room Upper Large Crate 2", "MQ Dodongo Cavern Staircase Room Upper Large Crate 2"),
 						M("Crate.png", 535, 144, 24, "OOT MQ Dodongo Cavern Staircase Room Upper Large Crate 3", "MQ Dodongo Cavern Staircase Room Upper Large Crate 3"),
 						M("Crate.png", 345, 142, 24, "OOT MQ Dodongo Cavern Staircase Room Upper Large Crate 4", "MQ Dodongo Cavern Staircase Room Upper Large Crate 4"),
 						M("Silver_Rupee.png", 288, 421, 24, "OOT MQ Dodongo Cavern SR Beamos", "MQ Dodongo Cavern SR Beamos"),
-						M("Silver_Rupee.png", 213, 237, 24, "OOT MQ Dodongo Cavern SR Crate", "MQ Dodongo Cavern SR Crate"),
+						M("Silver_Rupee.png", 189, 321, 24, "OOT MQ Dodongo Cavern SR Crate", "MQ Dodongo Cavern SR Crate"),
 						M("Silver_Rupee.png", 411, 121, 24, "OOT MQ Dodongo Cavern SR Vines", "MQ Dodongo Cavern SR Vines"),
 						M("Silver_Rupee.png", 88, 222, 24, "OOT MQ Dodongo Cavern SR Upper Corner Low", "MQ Dodongo Cavern SR Upper Corner Low"),
 						M("Silver_Rupee.png", 535, 120, 24, "OOT MQ Dodongo Cavern SR Upper Corner High", "MQ Dodongo Cavern SR Upper Corner High")
@@ -7379,7 +7379,7 @@ namespace OoTMMTracker.Services
                         M("Pot.png", 521, 443, 24, "OOT Dodongo Cavern Pot Room Before Miniboss 2", "Dodongo Cavern Pot Room Before Miniboss 2"),
 						
 						M("Grass.png", 516, 209, 24, "OOT MQ Dodongo Cavern Grass Room Before Miniboss", "MQ Dodongo Cavern Grass Room Before Miniboss"),
-						M("Crate.png", 214, 138, 24, "OOT MQ Dodongo Cavern Room After Upper Lizalfos Large Crate 1", "MQ Dodongo Cavern Room After Upper Lizalfos Large Crate 1"),
+						M("Crate.png", 298, 205, 24, "OOT MQ Dodongo Cavern Room After Upper Lizalfos Large Crate 1", "MQ Dodongo Cavern Room After Upper Lizalfos Large Crate 1"),
 						M("Crate.png", 394, 450, 24, "OOT MQ Dodongo Cavern Room After Upper Lizalfos Large Crate 2", "MQ Dodongo Cavern Room After Upper Lizalfos Large Crate 2"),
 						M("Pot.png", 359, 145, 24, "OOT MQ Dodongo Cavern Pot After Miniboss 1", "MQ Dodongo Cavern Pot After Miniboss 1"),
 						M("Pot.png", 386, 145, 24, "OOT MQ Dodongo Cavern Pot After Miniboss 2", "MQ Dodongo Cavern Pot After Miniboss 2"),
@@ -8561,7 +8561,9 @@ namespace OoTMMTracker.Services
                     Marks = new List<MapMark>
                     {
 						M("Wonder.png", 83, 509, 24, "OOT MQ Water Temple Wonder Item Before Boss 1", "MQ Water Temple Wonder Item Before Boss 1"),
-						M("Wonder.png", 139, 416, 24, "OOT MQ Water Temple Wonder Item Before Boss 2", "MQ Water Temple Wonder Item Before Boss 2")
+						M("Wonder.png", 139, 416, 24, "OOT MQ Water Temple Wonder Item Before Boss 2", "MQ Water Temple Wonder Item Before Boss 2"),
+						
+						ME("Entrance.png", 788, 282, "Entrance shuffle (Morpha)", "OOT_BOSS_TEMPLE_WATER")
                     }
                 },
 				new MapSubRegion
@@ -8572,9 +8574,7 @@ namespace OoTMMTracker.Services
                     Marks = new List<MapMark>
                     {
 						M("Collectible.png", 390, 299, 40, "OOT Water Temple Boss HC", "Water Temple Boss HC"),
-						M("NPC.png", 453, 299, 40, "OOT Water Temple Boss", "Water Temple Boss"),
-						
-						ME("Entrance.png", 788, 282, "Entrance shuffle (Morpha)", "OOT_BOSS_TEMPLE_WATER")
+						M("NPC.png", 453, 299, 40, "OOT Water Temple Boss", "Water Temple Boss")
                     }
                 }
             };
@@ -10366,7 +10366,7 @@ namespace OoTMMTracker.Services
 						M("Grass.png", 492, 535, 24, "MM Snowhead Temple Grass 09", "Snowhead Temple Grass 09"),
 						M("Grass.png", 473, 539, 24, "MM Snowhead Temple Grass 10", "Snowhead Temple Grass 10"),
 						
-						ME("Entrance.png", 636, 1, "Entrance shuffle (Goht)", "MM_BOSS_TEMPLE_SNOWHEAD")
+						ME("Entrance.png", 680, 1, "Entrance shuffle (Goht)", "MM_BOSS_TEMPLE_SNOWHEAD")
                     }
                 },
 				new MapSubRegion
