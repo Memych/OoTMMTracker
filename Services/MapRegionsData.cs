@@ -8155,7 +8155,7 @@ namespace OoTMMTracker.Services
                     DestinationEntranceIds = new List<string> { },
                     Marks = new List<MapMark>
                     {
-                        M("Collectible.png", 771, 576, 40, "OOT MQ Fire Temple Wonder Item After Flare Dancer", "MQ Fire Temple Wonder Item After Flare Dancer")
+                        M("Collectible.png", 771, 576, 40, "OOT MQ Fire Temple Flare Dancer Key", "MQ Fire Temple Flare Dancer Key")
                     }
                 },
 				new MapSubRegion
